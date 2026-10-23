@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KDA group dependency sequence</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: #16324b; background: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 12px; }
+    main { max-width: 900px; margin: 0 auto; }
+    .diagram { overflow-x: auto; border-radius: 4px; }
+    .diagram img, .diagram svg { display: block; width: 100%; min-width: 680px; height: auto; }
+    .hint { display: none; margin: 8px 0 0; font-size: 13px; line-height: 1.5; color: #526677; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 12px; }
+    [hidden] { display: none !important; }
+    button { appearance: none; border: 1px solid #527188; border-radius: 4px; padding: 10px 14px; min-height: 44px; font: inherit; font-size: 14px; line-height: 1.3; color: #16324b; background: #e8f4ff; cursor: pointer; }
+    button:hover { background: #dceeff; }
+    .play { background: #fdb515; }
+    .play:hover { background: #ffc744; }
+    :focus-visible { outline: 3px solid #0065b3; outline-offset: 3px; }
+    .status { flex-basis: 100%; min-height: 3em; margin: 0; font-size: 14px; line-height: 1.5; }
+    .stage-focus { fill: none; stroke: #0065b3; stroke-width: 2.5; stroke-dasharray: 7 4; vector-effect: non-scaling-stroke; pointer-events: none; }
+    .playing .stage-focus { animation: stage-flow 2s linear infinite; }
+    @keyframes stage-flow { to { stroke-dashoffset: -22; } }
+    @media (max-width: 703px) { .hint { display: block; } }
+    @media (prefers-reduced-motion: reduce) { .play { display: none; } .stage-focus { animation: none; stroke-dasharray: none; } }
+    @media print { body { padding: 0; } .controls, .hint, .stage-focus { display: none; } .diagram { overflow: visible; } .diagram img, .diagram svg { min-width: 0; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="diagram" tabindex="0" role="region" aria-label="KDA dependency diagram; scroll horizontally on narrow screens">
+      <svg xmlns="http://www.w3.org/2000/svg" width="900" height="585" viewBox="0 0 900 585" role="img" aria-labelledby="kda-group-rules-title kda-group-rules-desc" id="kda-group-rules-diagram">
+<title id="kda-group-rules-title">Know the rule before knowing the state</title>
+<desc id="kda-group-rules-desc">A scalar illustration combines halve then add two, followed by halve then add one, into quarter then add two. The rule can be built without the incoming state. Group summaries are composed in sequence order to find group starting states; groups then replay their chunks independently from those starting states. The scan and replay add work. Numbers are a toy, not actual KDA coefficients or a timing prediction.</desc>
+<defs><marker id="kda-group-rules-a" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M1 1L7 4L1 7" fill="none" stroke="#526677" stroke-width="1.7"></path></marker></defs>
+<style>#kda-group-rules-diagram text{font-family:Arial,Helvetica,sans-serif;fill:#16324b;font-size:18px}#kda-group-rules-diagram .title{font-size:27px;font-weight:700}#kda-group-rules-diagram .mt{font-size:24px;font-weight:700}#kda-group-rules-diagram .h{font-size:21px;font-weight:700}#kda-group-rules-diagram .b{font-weight:700}#kda-group-rules-diagram .s{font-size:16px}#kda-group-rules-diagram .m{fill:#526677}</style>
+<rect width="900" height="585" fill="white"></rect>
+<text x="24" y="38" class="title" text-anchor="start">Know the rule before knowing the state</text>
+<text x="24" y="75" class="m" text-anchor="start">First, combine two updates. The starting value can arrive later.</text>
+<rect x="24" y="99" width="210" height="72" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="129.0" y="129.5" class="b" text-anchor="middle" style="fill:#16324b">Halve, then</text>
+<text x="129.0" y="152.5" class="b" text-anchor="middle" style="fill:#16324b">add 2</text>
+<path d="M237 135H274" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="277" y="99" width="210" height="72" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="382.0" y="129.5" class="b" text-anchor="middle" style="fill:#16324b">Halve, then</text>
+<text x="382.0" y="152.5" class="b" text-anchor="middle" style="fill:#16324b">add 1</text>
+<path d="M17 99H8V171H17" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<path d="M505 99H526V171H505" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<text x="571" y="143" class="title" text-anchor="middle">=</text>
+<rect x="621" y="99" width="255" height="72" rx="7" fill="#fff3ce" stroke="#fdb515" stroke-width="1.5"></rect>
+<text x="748.5" y="129.5" class="b" text-anchor="middle" style="fill:#16324b">Combined rule:</text>
+<text x="748.5" y="152.5" class="b" text-anchor="middle" style="fill:#16324b">quarter, then add 2</text>
+<text x="450" y="205" class="s" text-anchor="middle">If the state later arrives as 8: 8 → 6 → 4, or directly 8 ÷ 4 + 2 = 4.</text>
+<rect x="24" y="232" width="852" height="317" rx="7" fill="#f7f9fb" stroke="#bdcbd6" stroke-width="1.5"></rect>
+<text x="44" y="267" class="h" text-anchor="start">Use the same idea across groups of chunks</text>
+<g id="kda-stage-1" data-stage="1" aria-label="Build group rules"><text x="45" y="307" class="b" text-anchor="start">1. Build group rules</text>
+<rect x="45" y="329" width="228" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="159.0" y="355.0" class="b" text-anchor="middle" style="fill:#16324b">Group 1 summary</text>
+<rect x="45" y="387" width="228" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="159.0" y="413.0" class="b" text-anchor="middle" style="fill:#16324b">Group 2 summary</text>
+<rect x="45" y="445" width="228" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="159.0" y="471.0" class="b" text-anchor="middle" style="fill:#16324b">Group 3 summary</text>
+</g><g id="kda-stage-2" data-stage="2" aria-label="Find starting states with an ordered prefix scan"><text x="344" y="307" class="b" text-anchor="start">2. Find starting states</text>
+<path d="M276 349H299V465H276" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<path d="M276 407H299" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<path d="M299 436H342" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="345" y="329" width="243" height="36" rx="7" fill="#eef1f5" stroke="#71849a" stroke-width="1.5"></rect>
+<text x="466.5" y="353.0" class="s" text-anchor="middle" style="fill:#16324b">Initial state S0</text>
+<path d="M466 367V389" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="345" y="392" width="243" height="87" rx="7" fill="#fff3ce" stroke="#fdb515" stroke-width="1.5"></rect>
+<text x="466.5" y="430.0" class="b" text-anchor="middle" style="fill:#16324b">Compose summaries</text>
+<text x="466.5" y="453.0" class="b" text-anchor="middle" style="fill:#16324b">in sequence order</text>
+<text x="466" y="512" class="s" text-anchor="middle" style="fill:#526677">The prefix scan</text>
+</g><g id="kda-stage-3" data-stage="3" aria-label="Replay the groups from their starting states"><text x="635" y="307" class="b" text-anchor="start">3. Replay the groups</text>
+<path d="M591 436H613" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<path d="M613 349V465" fill="none" stroke="#526677" stroke-width="1.7"></path>
+<path d="M613 349H636" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<path d="M613 407H636" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<path d="M613 465H636" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="639" y="329" width="67" height="40" rx="7" fill="#eef1f5" stroke="#71849a" stroke-width="1.5"></rect>
+<text x="672.5" y="355.0" class="b" text-anchor="middle" style="fill:#16324b">S0</text>
+<path d="M708 349H732" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="735" y="329" width="118" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="794.0" y="355.0" class="b" text-anchor="middle" style="fill:#16324b">Group 1</text>
+<rect x="639" y="387" width="67" height="40" rx="7" fill="#eef1f5" stroke="#71849a" stroke-width="1.5"></rect>
+<text x="672.5" y="413.0" class="b" text-anchor="middle" style="fill:#16324b">S1</text>
+<path d="M708 407H732" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="735" y="387" width="118" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="794.0" y="413.0" class="b" text-anchor="middle" style="fill:#16324b">Group 2</text>
+<rect x="639" y="445" width="67" height="40" rx="7" fill="#eef1f5" stroke="#71849a" stroke-width="1.5"></rect>
+<text x="672.5" y="471.0" class="b" text-anchor="middle" style="fill:#16324b">S2</text>
+<path d="M708 465H732" fill="none" stroke="#526677" stroke-width="1.7" marker-end="url(#kda-group-rules-a)"></path>
+<rect x="735" y="445" width="118" height="40" rx="7" fill="#e8f4ff" stroke="#30a2ff" stroke-width="1.5"></rect>
+<text x="794.0" y="471.0" class="b" text-anchor="middle" style="fill:#16324b">Group 3</text>
+</g><text x="24" y="578" class="s m" text-anchor="start">Groups become independent after the scan. Chunks inside each group stay ordered.</text>
+</svg>
+    </div>
+    <p class="hint">Scroll horizontally to read the full diagram.</p>
+    <div class="controls" role="group" aria-label="KDA dependency sequence">
+      <button class="play" type="button">Play sequence</button>
+      <button class="next" type="button">Next step</button>
+      <button class="reset" type="button">Reset</button>
+      <p class="status" role="status" aria-live="polite" aria-atomic="true">Step through the dependency order. Animation timing is illustrative.</p>
+    </div>
+  </main>
+  <script>
+    (() => {
+      "use strict";
+      const diagram = document.querySelector(".diagram");
+      const controls = document.querySelector(".controls");
+      const play = document.querySelector(".play");
+      const next = document.querySelector(".next");
+      const reset = document.querySelector(".reset");
+      const status = document.querySelector(".status");
+      const initialLabel = status.textContent;
+      const reducedMotion = matchMedia("(prefers-reduced-motion: reduce)");
+      const labels = [
+        "1 / 3 — Build each group’s summary before its incoming state is known.",
+        "2 / 3 — Scan the summaries in sequence order to find each group’s starting state.",
+        "3 / 3 — Replay the groups in parallel; tokens inside each group stay in order."
+      ];
+
+      async function enhance() {
+        const img = diagram.querySelector("img");
+        try {
+          const response = await fetch(img.src);
+          if (!response.ok) return;
+          const parsed = new DOMParser().parseFromString(await response.text(), "image/svg+xml");
+          const source = parsed.documentElement;
+          if (source.localName !== "svg" || parsed.querySelector("parsererror, script, foreignObject")) return;
+          if (![1, 2, 3].every((value) => source.querySelector(`[data-stage="${value}"]`))) return;
+          const svg = document.importNode(source, true);
+          img.replaceWith(svg);
+
+          let stage = 0;
+          let timer = null;
+          function stop() {
+            clearTimeout(timer);
+            timer = null;
+            play.textContent = "Play sequence";
+            diagram.classList.remove("playing");
+          }
+          function show(value) {
+            stage = value;
+            svg.querySelectorAll(".stage-focus").forEach((node) => node.remove());
+            status.textContent = stage ? labels[stage - 1] : initialLabel;
+            if (!stage) { diagram.scrollLeft = 0; return; }
+            const group = svg.querySelector(`[data-stage="${stage}"]`);
+            const bounds = group.getBBox();
+            const focus = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            for (const [key, value] of Object.entries({ x: bounds.x - 8, y: bounds.y - 8, width: bounds.width + 16, height: bounds.height + 16, rx: 8, class: "stage-focus", "aria-hidden": "true" })) {
+              focus.setAttribute(key, value);
+            }
+            group.append(focus);
+            const scale = svg.getBoundingClientRect().width / svg.viewBox.baseVal.width;
+            diagram.scrollLeft = (bounds.x + bounds.width / 2) * scale - diagram.clientWidth / 2;
+          }
+          function advance() {
+            if (stage >= 3) { stop(); return; }
+            show(stage + 1);
+            timer = setTimeout(advance, 2400);
+          }
+          play.addEventListener("click", () => {
+            if (timer !== null) { stop(); return; }
+            if (reducedMotion.matches) return;
+            if (stage >= 3) stage = 0;
+            diagram.classList.add("playing");
+            advance();
+            play.textContent = "Pause";
+          });
+          next.addEventListener("click", () => { stop(); show(stage % 3 + 1); });
+          reset.addEventListener("click", () => { stop(); show(0); });
+          reducedMotion.addEventListener("change", stop);
+          addEventListener("beforeprint", stop);
+          document.addEventListener("visibilitychange", () => { if (document.hidden) stop(); });
+          if ("IntersectionObserver" in window) {
+            new IntersectionObserver(([entry]) => { if (!entry.isIntersecting) stop(); }).observe(diagram);
+          }
+          controls.hidden = false;
+        } catch {
+          // The original SVG remains readable if enhancement is unavailable.
+        }
+      }
+      enhance();
+
+      let lastHeight = 0;
+      const sendHeight = () => {
+        const height = Math.ceil(document.body.getBoundingClientRect().height);
+        if (height !== lastHeight) {
+          lastHeight = height;
+          parent.postMessage({ type: "vllm-embed-resize", height }, "*");
+        }
+      };
+      addEventListener("load", sendHeight);
+      if ("ResizeObserver" in window) new ResizeObserver(sendHeight).observe(document.body);
+    })();
+  </script>
+
+
+</body><div id="codex-browser-sidebar-comments-root" style="position: fixed; inset: 0px; pointer-events: none; z-index: 2147483647;"></div></html>
