@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>图 3：PCP 与 DCP 预填充交互图</title>
+<style>
+:root{color-scheme:light dark}*{box-sizing:border-box}body{margin:0;padding:18px;background:#fff;color:#17202b;font-family:"Microsoft YaHei",system-ui,sans-serif}@media(prefers-color-scheme:dark){body{background:#161d25;color:#e6ebf1}}h1{font-size:20px;margin:0 0 6px}p{margin:0 0 12px;color:#657184;font-size:14px}
+</style>
+</head>
+<body>
+<h1>一层预填充如何分布到 8 张 GPU</h1>
+<p>选择并行方案，再使用“上一步”和“下一步”查看 query、KV 与跨 GPU 通信的变化。</p>
+<div id="ppx" role="figure" aria-label="图 3：DP8、TP8、PCP8 和 PCP8 × DCP8 的交互式预填充过程"></div>
+<script src="../prefill-explorer.js"></script>
+</body>
+</html>
