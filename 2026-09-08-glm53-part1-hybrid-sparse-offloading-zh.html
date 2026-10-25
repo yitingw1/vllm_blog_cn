@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载">
+  <title>GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载</h1>
+        <p class="original-title">GLM 5.3 Optimizations, Part 1: Hybrid HiSparse Offloading in vLLM</p>
+        <div class="meta">
+          <span>作者：vLLM 团队</span>
+          <span>发布日期：2026-09-08</span>
+          <a href="https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p align="center">
+<img src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/openhands-pareto-occupancy.svg" alt="GLM-5.3 使用混合 HiSparse 与 KV 卸载时的交互性、吞吐量和并发请求数" width="100%">
+</p>
+
+<p><strong>要点速览：</strong> vLLM 一直致力于让推理服务更快、成本更低。在这组分为上下两篇的文章中，我们介绍为 GLM-5.3 加入的新优化。第一部分展示了混合 HiSparse（Hybrid HiSparse）如何帮助在单个 8× H200 节点上运行聚合式部署；对于如此规模的模型，这一硬件配置的内存非常紧张。混合 HiSparse 让 GLM-5.3 可以在该硬件上运行此前无法实现的完整 <strong>100 万 token 上下文</strong>，并在不同上下文长度下实现显著更高的并发度。</p>
+<h2>在需要时利用稀疏性</h2>
+<p>智能体工作负载通常包含大量并发请求，每个请求都有很长且持续增长的上下文。GPU 块池的大小是固定的，因此 KV 缓存最终会没有空间为并发请求分配新块。</p>
+<p>此前主要有两种处理方式，各有取舍：</p>
+<ul>
+<li>**抢占（Preemption）**会选中一个请求，丢弃它的 KV 缓存，之后重新进行预填充。每次被逐出后，该请求都要重新承担完整的首 token 时间（TTFT）。</li>
+<li>**卸载（Offloading）**会把块移到主机内存，但稠密注意力要求全部 token 都驻留在 GPU 上，所以并发请求数仍受 GPU 内存限制。</li>
+</ul>
+<p>对于稀疏 MLA 的 KV 缓存，索引器会选出 top-K token，注意力只访问这些 token。<a href="https://arxiv.org/abs/2608.07009">HiSparse</a>利用了这一行为：除被选中的 token 外，其余 KV 缓存全部卸载到 CPU，从而为每个请求所需的 GPU 内存提供一个有效上限。索引器 KV 仍驻留在 GPU 上，并随上下文长度增长，但其总体体积小得多；而且 GLM-5.3 的 <a href="https://arxiv.org/abs/2603.12201">IndexShare</a> 让每四个稀疏 MLA 层只需要一个索引器层。</p>
+<p>本文提出的<strong>混合 HiSparse</strong>会在容量充足时继续把 KV 缓存在 GPU 上，只有当 KV 缓存承受压力时，才启用上述 HiSparse 卸载机制。热缓冲区页面按 token 建立索引，因此一个页面可以容纳来自许多不同 CPU 块的 token，从而覆盖跨度很大的上下文。这样一来，混合 HiSparse 只在系统真正面临 KV 缓存压力时，也就是并发度较高时，才支付 CPU–GPU 内存传输成本。</p>
+<p align="center">
+<img src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/hisparse-two-requests.svg" alt="同一个块池中的两个增长中请求：抢占、普通卸载与混合稀疏卸载" width="100%">
+</p>
+
+<p><em>抢占：释放请求 B 的槽位，并丢失其 KV。普通卸载：B 的 KV 保留在主机内存中，无需重新预填充，但在全部 KV 再次装入 GPU 前，B 仍不能继续运行，因此只有 A 在解码。混合稀疏卸载：每个请求就地释放最冷的页面，同一批槽位重新租给新的尾部页面和热页面，因此两个请求都能继续解码。</em></p>
+<p>只有混合 HiSparse 能让两个请求都持续解码。热页面与 KV 页面从同一个块池中租用；更关键的是，它们位于同一个 KV 缓存张量中，因此对稀疏 MLA 内核而言就像普通页面。混合稀疏模式允许一部分 token 位于热缓冲区，同时另一部分 token 仍位于 GPU 驻留页面，从而减少从 CPU 重新载入的数据量。</p>
+<h2>工作原理</h2>
+<p align="center">
+<img src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/hisparse-residency.svg" alt="共享 GPU 块池上的三种 KV 驻留状态" width="100%">
+</p>
+
+<p><em>每个面板中圈出的都是相同的六个 top-K token，只有其驻留位置发生变化。实线箭头表示缓存未命中，需要把一行复制进热页面；虚线箭头表示热缓存命中，可以直接复用，无需复制。</em></p>
+<p>系统按页面跟踪驻留状态。随着内存压力增减，一个请求会在三种状态之间切换：</p>
+<ul>
+<li>**完全驻留（Full residency）：**所有稀疏 MLA KV 都驻留在 GPU 上，同时已完成且可缓存的前缀页面会主动复制到主机内存。</li>
+<li>**混合驻留（Mixed residency）：**请求尾部保留在 GPU，较旧页面只存在于 CPU 内存，索引器从这些页面中需要的行则位于热缓冲区。块表同时包含真实块和空占位符，且尾部永远不会被逐出。一个融合内核负责解析 top-K：驻留 token 直接原地读取；热 token 被读取并刷新其 LRU 条目；未命中时，从固定页主机内存中把单行复制到一个 LRU 槽位。解码路径无需等待 CPU 做决定，因此仍可被 CUDA Graph 捕获。</li>
+<li>**无驻留（No residency）：**新请求复用一个只存在于 CPU 内存的前缀时，会从占位符和一个热页面开始。只有当索引器选中某些行时，这些行才被载入，因此系统只为模型真正关注的历史付出成本，而无需加载完整历史。</li>
+</ul>
+<p>三种状态之所以都能工作，是因为热缓冲区并非单独的内存分配。一个热缓冲区页面就是普通 KV 缓存块，通过 vLLM 的混合内存分配器（Hybrid Memory Allocator，HMA）从驻留页面共用的块池中租用：请求首次需要时取得，不再需要时归还。无论数据行位于驻留页面还是热缓冲区，解析器都会交给 HMA 行 ID，再由 HMA 以统一步幅收集数据。一个请求释放的块可以成为另一个请求的热缓冲区容量。</p>
+<p>HiSparse 会在压力真正到来前做好准备。一个可缓存的前缀页面完成后，HiSparse 会将其加入复制到 CPU 内存的队列，同时继续从 GPU 为请求提供服务。如果 GPU 缓存后来被占满，该页面无需再次复制即可释放 GPU 槽位。即使压力先到达一个较新的页面，只要复制任务进入队列，其 GPU 槽位就可以重新使用；传输完成后，CPU 副本也可用于前缀复用。</p>
+<p><code>hisparse-glm</code> 分支会在前向传播结束后，通过一次启动把所有稀疏 MLA 层一并复制，使该路径保持轻量。复制操作按模型的 GPU stream 排序，从而让同步保持简单且安全。</p>
+<h2>与 vLLM 其他组件组合</h2>
+<p>混合 HiSparse 是共享 HMA 池上的一项驻留策略，同时也是与 vLLM 其他 KV 机制并列的连接器，因此其余服务栈可以按原有方式工作。其他缓存组继续使用普通前缀缓存、传输和卸载。特别是索引器 KV 不受 HiSparse 影响：标准 <code>OffloadingConnector</code> 可以独立使用普通块级存储卸载它。在 P/D 分离式部署中，如果前缀无法驻留，导入数据可以直接落到主机侧；推测解码则通过每一步可重放的解析器计划运行，并共享请求的热状态。</p>
+<p>每个请求的热缓冲区默认大小为 top-K 行数的两倍，在保持缓冲区较小的同时确保较高命中率。由于 MLA KV 在各 TP rank 上完全相同，固定页主机池按 DP 副本分配，并由其本地 TP rank 共享。TP rank 0 写入共享副本，所有 rank 都可以读取，CUDA event 则用于保证 stream 顺序。</p>
+<h2>性能数据</h2>
+<p>我们在 8× H200 上使用 OpenHands 多轮智能体工作负载（<a href="https://www.lmsys.org/blog/2026-07-13-glm52-optimization">来源</a>）对 GLM-5.3 进行了测试：每段对话 13 轮，第一轮为 74,160 token，后续轮次为 753 token，输出固定为 220 token。两个 TP8 部署都使用 MTP3、FP8 KV 缓存、142K 准入上限，并设置 <code>max_num_batched_tokens=32768</code>、<code>max_num_seqs=256</code> 和 <code>gpu_memory_utilization=0.92</code>。卸载基线使用 512 GiB 卸载池；混合 HiSparse 则把同样的主机内存预算拆分为 384 GiB HiSparse 池和 128 GiB 普通卸载池。</p>
+<p align="center">
+<img src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/openhands-pareto-occupancy.svg" alt="混合 HiSparse 与 KV 卸载的交互性吞吐量帕累托曲线和并发运行请求数" width="100%">
+</p>
+
+<p><em>上图：交互性与吞吐量扫描。交互性定义为 1000 除以平均每输出 token 时间（TPOT）；逻辑总 token 吞吐量包含通过前缀缓存命中的提示词 token，并除以八张 GPU。下图：每个测试点期间收集的非零 <code>vllm:num_requests_running</code> 样本均值。混合 HiSparse 使用提交 <code>e8ef1e07bd</code>，卸载基线使用提交 <code>80cb71c9ff</code>。</em></p>
+<p>我们计划在 vLLM v0.30 中广泛提供混合 HiSparse。在此之前，本文末尾的<a href="#%E9%99%84%E5%BD%95%E5%A4%8D%E7%8E%B0%E5%AE%9E%E9%AA%8C%E7%BB%93%E6%9E%9C">复现实验附录</a>给出了生成这些结果所用的准确启动命令和基准客户端配置。</p>
+<h2>只在需要的地方执行卸载</h2>
+<p>混合 HiSparse 只会在确有需要的地方卸载。KV 从 GPU 开始，在容量充足时继续驻留；当块池空间不足时，再逐页放弃驻留。热缓冲区和驻留页面共享同一个池与张量，因此承受内存压力的请求可以在部分驻留状态下继续解码，而不用等待槽位释放，也不必重新进行预填充。</p>
+<h2>估算你的配置可以获得多少收益</h2>
+<p>下面的计算器使用相同的可用 HBM，对普通 GPU 驻留 KV 和混合稀疏卸载容量进行估算。可以调整工作负载、GPU、并行方式、热缓冲区和主机池参数，以近似你的实际部署，并观察潜在并发提升。</p>
+<p>计算器会显示让 CPU 内存不再限制 GPU 侧索引器和热缓冲区可支持并发度时，所需的最小 HiSparse 主机池。原生索引器卸载被建模为独立的 CPU 总池：它可以扩展前缀缓存，但活跃索引器历史仍会占用 HBM，因此仍计入运行请求上限。图表在假设 HiSparse 主机容量不是瓶颈的情况下，对比不同序列长度下的 HiSparse 与普通 GPU 驻留总并发量。热缓冲区会为每个请求增加固定 GPU 成本，所以在短上下文时，普通驻留可能容纳更多请求；在长上下文时，对稀疏 MLA 驻留设置上限可以让 HiSparse 维持更多并发请求。扩大热缓冲区会用一部分容量换取更高的热缓存覆盖率。</p>
+<blockquote>
+<p>**说明：**这些是规划估算值，并非保证的服务上限。运行时工作区、请求长度差异和调度行为都可能降低实际可达到的并发度。</p>
+</blockquote>
+<blockquote>
+<p>**说明：**MTP 还可能进一步限制并发，因为热缓冲区必须同时容纳全部验证 token。文章发布时，每个热缓冲区需要设置为 <code>(num_speculative_tokens + 2) × top-K</code>。随着我们继续缩小缓冲区，这一要求可能变化。下面的计算器目前没有考虑这一约束。</p>
+</blockquote>
+<iframe src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/interactive/hisparse-concurrency-calculator.html" title="混合 HiSparse 卸载并发容量计算器" loading="lazy" style="display:block;width:100%;height:1520px;border:0;overflow:hidden;"></iframe>
+
+<p><a href="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/interactive/hisparse-concurrency-calculator.html">单独打开本地并发容量计算器</a></p>
+<details>
+<summary>当前阅读器不支持 iframe 时，展开静态预览</summary>
+
+<p><img src="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/hisparse-concurrency-calculator.png" alt="HiSparse 并发容量计算器静态预览"></p>
+</details>
+
+<h2>第二部分</h2>
+<p>本文是使用 vLLM 服务 GLM-5.3 系列文章的第一篇。混合 HiSparse 在 P/D 部署的解码端最为重要，因为这里的上下文最长，KV 压力也最大。在<a href="https://vllm.ai/blog/2026-10-23-glm53-part2-pcp-dcp-hisparse">第二部分</a>中，我们会在大规模部署中把这些组件组合起来，结合新的和现有的优化：预填充上下文并行（PCP）、<a href="https://vllm.ai/blog/2026-08-07-decode-context-parallelism">解码上下文并行（DCP）</a>、<a href="https://vllm.ai/blog/2026-08-14-dspark-adaptive-verification">自适应验证</a>和混合 HiSparse。</p>
+<h2>致谢</h2>
+<p>vLLM 的混合 HiSparse 实现由 Matthew Bonanni（Red Hat）、Lucas Wilkinson（Red Hat）和 Fares Obeid（Prime Intellect）开发。该设计是在与 Chao Lei（Ant Group）和 Nicolò Lucchesi（Mistral）的密切合作中形成的。Simon Veitner（Red Hat）参与了性能评估和本文撰写。感谢 <a href="https://arxiv.org/abs/2608.07009">HiSparse</a> 的作者开发了本文采用的稀疏卸载概念。</p>
+<h2>附录：复现实验结果</h2>
+<p>上述结果使用 <a href="https://github.com/neuralmagic/vllm/commit/e8ef1e07bd2f174bebfe34c3a3e35e952931efb1">vLLM <code>e8ef1e07bd</code></a>。我们计划在 vLLM v0.30 中广泛提供混合 HiSparse；在此之前，请构建上述固定版本。在一个 8× H200 节点上使用以下命令启动混合 HiSparse 配置：</p>
+<pre><code class="language-bash">vllm serve zai-org/GLM-5.3 \
+  --served-model-name glm-agentx \
+  --trust-remote-code \
+  --host 0.0.0.0 \
+  --port 8000 \
+  --tensor-parallel-size 8 \
+  --kv-cache-dtype fp8 \
+  --gpu-memory-utilization 0.92 \
+  --max-model-len 142000 \
+  --max-num-batched-tokens 32768 \
+  --max-num-seqs 256 \
+  --enable-prefix-caching \
+  --attention-config &#39;{&quot;hisparse_config&quot;:{&quot;host_pool_gib&quot;:384}}&#39; \
+  --kv-transfer-config &#39;{&quot;kv_connector&quot;:&quot;OffloadingConnector&quot;,&quot;kv_role&quot;:&quot;kv_both&quot;,&quot;kv_connector_extra_config&quot;:{&quot;spec_name&quot;:&quot;TieringOffloadingSpec&quot;,&quot;cpu_bytes_to_use&quot;:137438953472}}&#39; \
+  --speculative-config &#39;{&quot;method&quot;:&quot;mtp&quot;,&quot;num_speculative_tokens&quot;:3}&#39; \
+  --enable-auto-tool-choice \
+  --tool-call-parser glm47 \
+  --reasoning-parser glm45
+</code></pre>
+<p><code>host_pool_gib</code> 按 DP 副本设置，并向上取整到完整主机块。128 GiB 普通卸载池用于保存 HiSparse 不管理的缓存组，包括索引器 KV。若要复现不使用 MTP 的 HiSparse，请省略 <code>--speculative-config</code>。若要复现图中的非 HiSparse MTP3 基线，请保留 <code>--speculative-config</code>、省略 <code>--attention-config</code>，并把 <code>cpu_bytes_to_use</code> 改为 <code>549755813888</code>（512 GiB）。若要运行无 MTP 基线，则同时省略 HiSparse 和 <code>--speculative-config</code>。HiSparse 当前仅针对 NVIDIA GPU 实现。</p>
+<h3>复现填充后的 OpenHands 扫描</h3>
+<p>基准客户端所需的全部文件都随本文提供，因此流程可以独立复现：<a href="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/repro/build_openhands_padded_dataset.py"><code>build_openhands_padded_dataset.py</code></a>、<a href="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/repro/install_evalscope_deps.sh"><code>install_evalscope_deps.sh</code></a> 和 <a href="assets/2026-09-08-glm53-part1-hybrid-sparse-offloading/repro/evalscope-all-nodeps.txt"><code>evalscope-all-nodeps.txt</code></a>。请把三个文件下载到同一目录。EvalScope 固定在提交 <code>acd09b44384d53174768bb1063f675420f76fae9</code>。下面的命令会构建一个确定性的 128 段对话数据集，然后运行 c1/c8/c16/c24/c32；每个测试点均使用全新对话：</p>
+<pre><code class="language-bash">python3.12 -m venv client-venv
+source client-venv/bin/activate
+bash install_evalscope_deps.sh
+pip install &#39;modelscope[datasets]==1.34.0&#39; &#39;lxml==6.0.2&#39;
+pip install &#39;evalscope[perf] @ git+https://github.com/modelscope/evalscope.git@acd09b44384d53174768bb1063f675420f76fae9&#39;
+
+python build_openhands_padded_dataset.py \
+  --model zai-org/GLM-5.3 \
+  --pad-source openscience \
+  --first-turn-length 74160 \
+  --subsequent-turn-length 753 \
+  --num-turns 13 \
+  --number 128 \
+  --output-path openhand-zai-org-GLM-5.3.json
+
+evalscope perf \
+  --model glm-agentx \
+  --url http://127.0.0.1:8000/v1/chat/completions \
+  --api openai \
+  --dataset swe_smith \
+  --dataset-path openhand-zai-org-GLM-5.3.json \
+  --dataset-offset 52 \
+  --max-tokens 220 \
+  --multi-turn \
+  --number 4 16 32 48 64 \
+  --parallel 1 8 16 24 32 \
+  --extra-args &#39;{&quot;ignore_eos&quot;:true}&#39; \
+  --name tp8-hisparse384-native128 \
+  --outputs-dir results \
+  --no-timestamp
+</code></pre>
+<p>图中的交互性计算为 <code>1000 / mean_TPOT_ms</code>；每张 GPU 的逻辑总 token 吞吐量为 EvalScope 的总 token 吞吐量除以八。我们在每个测试点运行期间每 30 秒抓取一次 <code>/metrics</code>。请求占用率取非零 <code>vllm:num_requests_running</code> 样本的均值；MTP 接受长度计算为 <code>1 + Δ(vllm:spec_decode_num_accepted_tokens_total) / Δ(vllm:spec_decode_num_drafts_total)</code>。</p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
