@@ -12,3 +12,12 @@ vLLM 官方博客的中文翻译与本地交互版本。
 - [vLLM 首日支持 MiniMax-M3.1-Flash](2026-10-23-minimax-m31-flash-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-23-minimax-m31-flash)）
 
 HTML 文件依赖仓库中的 `assets` 目录。下载仓库后，请保持目录结构不变并使用浏览器打开 HTML。
+
+## 路线图
+
+- [vLLM 2026 年第四季度路线图（中文翻译）](vLLM-Roadmap-Q4-2026-zh.md)（[英文原文](https://github.com/vllm-project/vllm/issues/61024)）
+- [SGLang 2026 年第四季度开发路线图（中文翻译）](SGLang-Roadmap-Q4-2026-zh.md)（[英文原文](https://github.com/sgl-project/sglang/issues/42473)）
+
+## 其他中文资料
+
+- [AMD Infera README 中文翻译与 Infera、llm-d、NVIDIA Dynamo 对比](Infera-README-zh.md)（[原仓库](https://github.com/AMD-AGI/Infera)）
