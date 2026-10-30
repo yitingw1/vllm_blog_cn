@@ -10,6 +10,7 @@ vLLM 官方博客的中文翻译与本地交互版本。
 - [大规模服务 DeepSeek-V4.1-Flash：vLLM 匹配 DeepInfer 并扩展至 GB300 NVL72](2026-10-23-deepseek-v41-flash-pd-wide-ep-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-23-deepseek-v41-flash-pd-wide-ep)）
 - [GLM-5.3 优化（二）：在 16 张 H200 上结合 PCP、DCP 与混合 HiSparse](2026-10-23-glm53-part2-pcp-dcp-hisparse-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-23-glm53-part2-pcp-dcp-hisparse)）
 - [vLLM 首日支持 MiniMax-M3.1-Flash](2026-10-23-minimax-m31-flash-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-23-minimax-m31-flash)）
+- [vLLM 首日支持 Mistral Large 4](2026-10-29-mistral-large-4-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-29-mistral-large-4)）
 
 HTML 文件依赖仓库中的 `assets` 目录。下载仓库后，请保持目录结构不变并使用浏览器打开 HTML。
 
