@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SGLang 与 Miles 首日支持 DeepSeek-V4.1">
+  <title>SGLang 与 Miles 首日支持 DeepSeek-V4.1</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>SGLang 与 Miles 首日支持 DeepSeek-V4.1</h1>
+        <p class="original-title">SGLang and Miles Add Day-0 Support for DeepSeek-V4.1</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-09-09</span>
+          <a href="https://www.sglang.io/blog/deepseek-v4.1-day0-support">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p align="center">
+<img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-01.png" alt="SGLang 与 Miles 首日支持 DeepSeek-V4.1" width="100%">
+</p>
+
+<p>SGLang 中的 Day-0 推理支持和 Miles 中的 Day-0 RL 支持。</p>
+<iframe class="vllm-embed" src="assets/2026-09-09-deepseek-v4.1-day0-support/interactive/page.html" title="交互图 1" loading="lazy" style="height: 760px;"></iframe>
+
+<p><a href="assets/2026-09-09-deepseek-v4.1-day0-support/interactive/page.html">单独打开本地交互页面</a>（可用“上一张 / 下一张”浏览全部本地静态备用图）</p>
+
+<details><summary>查看静态备用图</summary><img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-01.png" alt="交互图 1"></details>
+
+<h2>概述</h2>
+<p>DeepSeek-V4.1 Flash 是 DeepSeek 新架构系列中最小的模型：一个拥有 552B 参数、原生支持多模态视觉的 MoE。其因果编码器—解码器（Causal-Encoder-Decoder）在处理输入时激活 8B 参数，在生成输出时激活 16B 参数。</p>
+<p>DeepSeek 报告称，V4.1 Flash 的能力强于 V4 Pro，同时成本更低、生成速度更快、任务完成时间更短。模型权重已发布在 <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash">Hugging Face</a>，架构细节见<a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf">技术报告</a>。</p>
+<h2>V4 的新增功能</h2>
+<p>V4.1 引入的是新架构，而不是 V4 的一个新检查点。Flash 比 V4 Flash 更大，但激活参数更少，支持原生视觉，并使用更小的 KV 缓存。</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>V4</th>
+<th>V4.1 Flash</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>架构</td>
+<td>仅解码器 MoE；CSA/HCA、mHC、MTP</td>
+<td>因果编码器—解码器；压缩注意力 + SWA、mHC、Engram</td>
+</tr>
+<tr>
+<td>参数</td>
+<td>Flash 284B、Pro 1.6T；分别激活 13B 和 49B</td>
+<td>总计 552B；输入激活 8B，输出激活 16B</td>
+</tr>
+<tr>
+<td>每个 token 的全局 KV</td>
+<td>3,514 字节</td>
+<td>890 字节，约为 V4 的四分之一</td>
+</tr>
+<tr>
+<td>模态</td>
+<td>文本；视觉通过 Flash-Vision-Exp 扩展</td>
+<td>原生视觉</td>
+</tr>
+</tbody></table>
+<figure>
+<img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-02.png" alt="交互图 2">
+<figcaption>交互图 2（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<h2>SGLang Day-0 支持</h2>
+<p>SGLang 为 V4.1 提供 Day-0 支持。下表列出了功能和硬件的发布范围。</p>
+<h3>功能</h3>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>状态</th>
+<th>覆盖范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>并行</td>
+<td>支持</td>
+<td>TP、EP、DP Attention、CP（仅文本）、MoRI（仅文本）</td>
+</tr>
+<tr>
+<td>推测解码</td>
+<td>支持</td>
+<td>官方 DSpark 实现</td>
+</tr>
+<tr>
+<td>缓存</td>
+<td>支持</td>
+<td>Radix 前缀缓存、分块预填充、Mooncake、P/D 分离</td>
+</tr>
+<tr>
+<td>HiCache</td>
+<td>支持</td>
+<td>可与 DSpark 推测解码结合</td>
+</tr>
+<tr>
+<td>执行</td>
+<td>支持</td>
+<td>Decode CUDA Graph、Prefill CUDA Graph、多流重叠</td>
+</tr>
+<tr>
+<td>官方内核</td>
+<td>支持</td>
+<td>DeepGEMM、FlashMLA</td>
+</tr>
+<tr>
+<td>量化</td>
+<td>支持</td>
+<td>FP8 dense（Blackwell 使用 MXFP8）、MXFP4 专家、FP4 索引器缓存</td>
+</tr>
+<tr>
+<td>视觉</td>
+<td>支持</td>
+<td>图像输入、动态分辨率、多图、VL 专家路由</td>
+</tr>
+<tr>
+<td>API</td>
+<td>支持</td>
+<td>Chat 编码器、工具调用、推理解析器、推理强度（low / high / xhigh / max 或 1–100）、思考开关、快速指令任务、结构化输出和流式输出</td>
+</tr>
+<tr>
+<td>SWA 有界重放</td>
+<td>支持</td>
+<td>编码器与解码器 SWA 有界重放</td>
+</tr>
+<tr>
+<td>Engram 记忆</td>
+<td>支持</td>
+<td>默认开启，可放在主机或设备内存</td>
+</tr>
+</tbody></table>
+<figure>
+<img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-03.png" alt="交互图 3">
+<figcaption>交互图 3（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<h4>Engram 记忆</h4>
+<p>SGLang 支持将 Engram 表灵活放置在 GPU 或主机内存中。在 NVIDIA GB 系列系统上，SGLang 利用高速 CPU–GPU 互连把这些表移到主机内存，从而释放 GPU HBM 供 KV 缓存使用。共享的主机端存储还可以消除 Engram 查找所需的跨 GPU 集合通信。</p>
+<figure>
+<img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-04.png" alt="交互图 4">
+<figcaption>交互图 4（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>我们评估了 NVIDIA GB 系列系统上的主机内存布局。最佳布局策略取决于每个平台的内存和互连功能，我们正在探索其他平台以扩大我们的建议。</p>
+<p>有关更多详细信息，请阅读<a href="https://www.lmsys.org/blog/2026-09-10-deepseek-v41">技术深入探讨</a>。</p>
+<h3>硬件</h3>
+<p>Day-0 支持覆盖 NVIDIA Blackwell（B200、B300 和 GB300）、NVIDIA Hopper（H200）以及 AMD Instinct MI350X。所有 Day-0 配方都使用预览版镜像；这一支持尚未进入 SGLang 的正式发行版。</p>
+<p>集成了 DeepSeek V4.1 更新的 FlashMLA 和 DeepGEMM 内核。我们仍在集成新的 DeepSelect 以进一步提高性能。</p>
+<p>启动配方位于 <a href="https://docs.sglang.io/cookbook/autoregressive/DeepSeek/DeepSeek-V4_1">SGLang Cookbook</a> 中。如有疑问，请加入 <a href="https://slack.sglang.io">SGLang Slack</a>。</p>
+<h2>Miles Day-0 支持</h2>
+<p><a href="https://miles.radixark.com">Miles</a> 是一个开源的强化学习（RL）与大规模模型后训练框架，原生使用 SGLang 进行 rollout（采样生成）。针对 V4.1，Miles 的 Megatron-Core 插件在训练路径中实现了共享注意力状态、mHC 和 Engram。</p>
+<p>Miles 还在积极开发长时程编程智能体训练支持，包括 Terminal-Bench 任务。</p>
+<figure>
+<img src="assets/2026-09-09-deepseek-v4.1-day0-support/figure-05.png" alt="交互图 5">
+<figcaption>交互图 5（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<table>
+<thead>
+<tr>
+<th>领域</th>
+<th>Day-0</th>
+<th>覆盖范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>后端</td>
+<td>支持</td>
+<td>Megatron-Core 插件</td>
+</tr>
+<tr>
+<td>Rollout（采样生成）</td>
+<td>支持</td>
+<td>SGLang</td>
+</tr>
+<tr>
+<td>并行</td>
+<td>支持</td>
+<td>DP / TP / SP / EP / PP / CP</td>
+</tr>
+<tr>
+<td>量化</td>
+<td>支持</td>
+<td>FP4 压缩状态、FP8 窗口缓存、直通梯度</td>
+</tr>
+<tr>
+<td>路由重放</td>
+<td>支持</td>
+<td>将 rollout 阶段的专家分配反馈给训练器</td>
+</tr>
+<tr>
+<td>已验证训练</td>
+<td>支持</td>
+<td>DAPO-Math-17K，16×GB300，TP4 / EP16，每步 128 个样本，120+ 步</td>
+</tr>
+</tbody></table>
+<p>在 16×GB300 上进行的 DAPO-Math-17K 训练完成了 120 多步（TP4、EP16、每步 128 个样本）。在第 0–80 步期间，五步平均奖励从 0.51 上升到 0.78，训练器与 rollout 之间的逐 token KL 始终保持在 0.0012–0.0017。</p>
+<p>训练食谱可在<a href="https://miles.radixark.com/docs/models/deepseek/deepseek-v4-1-flash">Miles Cookbook</a>中找到。</p>
+<p>有关 SGLang 服务和 Miles 训练后支持背后的实现细节，请阅读<a href="https://www.lmsys.org/blog/2026-09-10-deepseek-v41">技术深入探讨</a>。</p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 SGLang 官方英文原文翻译。图片与交互页面已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

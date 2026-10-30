@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SGLang 统一内存：保留 1.9 倍前缀，回访请求耗时降低 37.9%">
+  <title>SGLang 统一内存：保留 1.9 倍前缀，回访请求耗时降低 37.9%</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>SGLang 统一内存：保留 1.9 倍前缀，回访请求耗时降低 37.9%</h1>
+        <p class="original-title">Unified Memory in SGLang: 1.9× as many prefixes retained, 37.9% less time for returning requests</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-10-22</span>
+          <a href="https://www.sglang.io/blog/unified-memory">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><blockquote>
+<p>为了支持现代混合注意力模型，SGLang 保存每个 token 的 KV（用于完全注意力）和循环状态（用于 Mamba 层）。为每个 GPU 分配固定份额的 GPU 内存，可以填满其中一个，而另一个仍有空间，从而使内存未使用。统一内存让两者共享一个缓冲区并根据需求变化分配空间。本文解释了 SGLang 如何实现这一点以及基于它的优化。在缓存压力实验中，淘汰改进保留了 1.9 倍的前缀，并将回访请求的总耗时降低了 37.9%。</p>
+</blockquote>
+<blockquote>
+<p>先决条件：阅读 Unified Radix Cache 。</p>
+</blockquote>
+<p><img src="assets/2026-10-22-unified-memory/figure-01.png" alt="2026-10-22-unified-memory 图 1"></p>
+<h2>背景</h2>
+<p>在推理过程中，模型会保存键和值（或 KV），以供生成答案时使用。 KV 缓存就是保存这个 KV 的容器。现代混合模型具有不同类型的注意力层，它们以不同的方式保存这段历史：</p>
+<ul>
+<li><strong>全注意力层保留每个 token 的键和值。</strong> 读取更多 token 会增加更多 KV。生成时，attention读取这个 KV 来回顾文档。</li>
+<li><strong>循环层更新固定大小的状态。</strong> 每个新 token都会写入该状态，覆盖其早期内容：内容发生变化，但状态不会增长。由于这种覆盖，只有当状态保存在完全相同的位置时才可以重用；否则它所保存的历史就已经被覆盖了。每个活动请求都需要其自己的工作状态。保留该状态的副本以供以后重用（称为检查点）需要另一个状态槽。</li>
+</ul>
+<p>该图遵循一个请求。随着上下文的增长，KV 会累积，而循环状态会就地更新。混合模型需要两者继续生成。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-02.html" title="2026-10-22-unified-memory 图 2交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-02.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-02.png" alt="2026-10-22-unified-memory 图 2静态备用图"></details>
+
+<p>这会产生尺寸问题。许多短请求需要许多状态槽，但每个请求需要很少的 KV。一些长请求需要更少的工作状态，但需要更多的 KV。如果 SGLang 在启动时为每种类型保留固定数量的内存，则一个池可能已满，而另一个池仍有未使用的空间，因此没有固定的分割可以处理这两种情况。</p>
+<h2>统一内存</h2>
+<h3>共享未使用的空间</h3>
+<p>SGLang 的统一内存将两种数据放入<strong>一个 ​​GPU 缓冲区</strong>。循环状态从一端生长； KV 是从对方增长的。任何一方都可以从它们之间的空闲区域获取字节。总缓冲区大小保持不变，而每种类型的可用容量随需求而变化。</p>
+<p>假设缓冲区有 24 个单元。每个请求需要 2 个单位的循环状态和 1 个单位的 KV。状态单元固定为 8 个，KV 单元固定为 16 个，仅允许四个请求：状态池已满，即使有 12 个 KV 单元未使用。共享池使用 21 个单元满足示例中的所有七个请求。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-03.html" title="2026-10-22-unified-memory 图 3交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-03.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-03.png" alt="2026-10-22-unified-memory 图 3静态备用图"></details>
+
+<p>长上下文可能会导致相反的问题：KV 耗尽，而状态容量闲置。选择“长上下文”来查看该案例。当固定分割受到限制时，共享会有所帮助。当组合数据填满整个缓冲区时，请求仍然必须等待，或者必须逐出缓存的数据。</p>
+<p>这里，“统一内存”是指同一 GPU 上的 SGLang 缓存之间共享容量。它不会将数据移动到 CPU 内存。<a href="2026-10-19-hicache-zh.html">HiCache</a> 负责另一项任务：将缓存历史保存在 CPU 内存或外部存储中，并在需要时重新加载。</p>
+<h3>将数据打包到可移动块中</h3>
+<p>共享缓冲区是 GPU 内存的一个连续范围。分配器从其两端分配空间。它还必须将释放的空间返回到中间的自由区域，如下所示，它有时会移动方块来关闭洞。所有这一切都要求它管理的每个块占据一个连续的范围。</p>
+<p>默认情况下，KV 并不是这样存储的。SGLang 按页分配 KV，每个页面容纳多个 token，每个全注意力层都为这些 token 保留自己的 KV。通常每一层都有单独的缓冲区，因此一个页面会按层拆成若干块，分布在不同缓冲区中。释放页面会在每层缓冲区中留下一个小孔，导致空闲空间分散。</p>
+<p>因此，统一内存切换到以页为主的布局。一页的所有层的 KV 并排位于一个连续的块中，称为 <strong>页面信封</strong>。页面中的数据不变；只是它在内存中的位置不同。现在释放页面会释放一个连续的范围，该范围可以返回到共享的空闲区域。移动页面会复制一个块，而不是每层复制一个块。</p>
+<p>这种不同的布局会产生成本：</p>
+<ul>
+<li>内核必须通过跨步视图将每一层读取到信封中，因此统一内存目前仅支持一些注意力后端，并且需要相同大小的 K 和 V 头。</li>
+<li>每次前向传递必须首先将虚拟 ID 转换为物理位置。</li>
+</ul>
+<p>测量的开销包含在最后的结果中。</p>
+<p>该图比较了使用三层和两个页面的两种布局。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-04.html" title="2026-10-22-unified-memory 图 4交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-04.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-04.png" alt="2026-10-22-unified-memory 图 4静态备用图"></details>
+
+<p>循环状态块类似地保存循环层所需的状态。 KV 页和状态块保持自己的大小。两者都从同一个缓冲区中进行绘制，因此释放一个大的状态块可以为几个较小的 KV 页腾出空间。</p>
+<h3>在运行时整合释放的空间</h3>
+<p>在统一内存中，释放的块可能位于两个活动块之间。图中，状态块A、B和C占据左端。释放 B 会留下一个空洞，但 C 仍然将该空洞与共享空闲区域分开，因此释放的空间无法完全使用。因此，SGLang 将 C 移动到 B 的旧位置。然后，C 的旧空间加入空闲区域，可以在其中分配新的 KV 页。</p>
+<p>请求在移动后仍然需要找到C。 SGLang 为 C 提供了一个稳定的<strong>虚拟 ID</strong> 并保留了其当前位置的表。请求继续引用C；该表从“C is at 8”更改为“C is at 4”。移动数据不需要重写每个引用它的请求。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-05.html" title="2026-10-22-unified-memory 图 5交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-05.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-05.png" alt="2026-10-22-unified-memory 图 5静态备用图"></details>
+
+<p>这个过程称为<strong>压缩</strong>。当分配需要空间时，SGLang 可以暂时留下一个洞并进行压缩。移动数据必须等到安全为止：GPU 计算或网络传输仍在使用的数据不能在操作过程中移动。</p>
+<p><a href="https://github.com/sgl-project/sglang/pull/29678">共享池实现</a> 引入了这种分配和映射机制。 <a href="https://github.com/sgl-project/sglang/pull/35177">后来的扩展</a> 让三种类型共享缓冲区：全注意力 KV、滑动窗口 KV 和循环状态。滑动窗口层只需要最近的token窗口；他们的容量需求可能与其他池不同。</p>
+<h2>统一内存中的淘汰策略</h2>
+<p>请求完成后，SGLang 可以保留文档的 KV 和请求结束时的循环状态检查点。当另一个请求以完全相同的token前缀开始时，它可以重用已保存的历史记录并仅计算新的后缀。当内存有限时，逐出缓存的前缀会立即释放空间，但稍后的请求可能必须再次计算它。</p>
+<p>对于共享内存，淘汰决策必​​须计算它可以回收的所有容量。假设一个新的分配需要6个单位的 KV 空间。淘汰一个缓存的前缀会释放 1 个单位的 KV 和一个 2 个单位的状态检查点。经过两次淘汰和任何所需的压缩后，(1 + 2) × 2 = 6 个单位可用。仅计算 2 KV 单元将使 SGLang 不断删除前缀，即使分配已经适合。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-06.html" title="2026-10-22-unified-memory 图 6交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-06.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-06.png" alt="2026-10-22-unified-memory 图 6静态备用图"></details>
+
+<p>SGLang 的<a href="https://github.com/sgl-project/sglang/pull/33091">淘汰改进</a> 在每次淘汰后检查共享分配器是否可以满足挂起的分配。一旦可以，淘汰就会停止。该检查包括可从其他池恢复的空间，因此可以保留缓存更有用的前缀。</p>
+<h2>结果</h2>
+<p>下面的实验首先缓存了28个不同的前缀，然后发送一个不相关的长请求来造成内存压力。最后，它再次发送原始前缀。幸存的前缀可以节省重复的提示计算；被淘汰的人必须重新计算。</p>
+<p><strong>两种变体都已使用统一内存。</strong> 当分配驱动的淘汰停止时，比较会发生变化。通过改进的规则，更多的前缀可以生存，并且 28 个回访请求可以更快完成。</p>
+<iframe class="vllm-embed" src="assets/2026-10-22-unified-memory/interactive/figure-07.html" title="2026-10-22-unified-memory 图 7交互图" loading="lazy" style="display:block;width:100%;height:760px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-10-22-unified-memory/interactive/figure-07.html">单独打开交互图</a></p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-10-22-unified-memory/figure-07.png" alt="2026-10-22-unified-memory 图 7静态备用图"></details>
+
+<p>这个收益有一个前提：单次分配必须足够大。在实验中，7,000 个 token 的请求一次性分配了全部 KV。当请求被拆成四个 2,048 个 token 的块时，新旧规则得到相同结果，均保留 17 个前缀。总体吞吐量没有出现稳定变化。</p>
+<p>统一内存也有成本：位置表、压缩期间的块副本以及前面描述的布局成本。在<a href="https://github.com/sgl-project/sglang/pull/35177">五个模型</a> 中，输出token之间的中位时间范围从快 0.81% 到慢 1.32%。好处是更好地利用内存，而不是更快的计算。</p>
+<h2>进一步阅读</h2>
+<ul>
+<li><a href="https://www.lmsys.org/blog/2026-07-27-kimi-k3-day0-support">LMSYS 博客：SGLang 和 Miles 为 Kimi K3 添加 Day-0 支持</a></li>
+<li><a href="https://docs.sglang.io/cookbook/autoregressive/Moonshotai/Kimi-K3">SGLang 食谱：Kimi K3</a></li>
+<li><a href="https://github.com/sgl-project/sglang/pull/29678">sglang#29678：feat(mem_cache)：混合 Mamba / SWA 模型的统一内存池</a></li>
+<li><a href="https://github.com/sgl-project/sglang/pull/33091">sglang#33091: [统一内存] 当共享分配容量足够时停止淘汰</a></li>
+<li><a href="https://github.com/sgl-project/sglang/pull/35177">sglang#35177：壮举（统一内存）：mamba + 混合 SWA 模型的三个子池</a></li>
+</ul>
+<p><em>可视化教程由<a href="https://github.com/Ccyest">YichiZhang</a>和 SGLang 团队编写。</em></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 SGLang 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

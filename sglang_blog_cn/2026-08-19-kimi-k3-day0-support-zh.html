@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kimi K3：架构解析与 SGLang 首日支持">
+  <title>Kimi K3：架构解析与 SGLang 首日支持</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>Kimi K3：架构解析与 SGLang 首日支持</h1>
+        <p class="original-title">Kimi K3: Architecture and SGLang Day-0 Support</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-08-19</span>
+          <a href="https://www.sglang.io/blog/kimi-k3-day0-support">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p align="center"><img src="assets/2026-08-19-kimi-k3-day0-support/figure-01.png" alt="Kimi K3：架构解析与 SGLang 首日支持" width="100%"></p>
+
+<p>本文从 MHA、DeltaNet 一路讲到 KDA，梳理注意力机制的演进；解释 Kimi K3 的混合架构如何支撑 2.8 万亿参数和 100 万 token 上下文；并介绍 SGLang 如何通过统一内存池、分块流水线并行（chunked PP）和解码上下文并行（DCP）高效运行 K3。</p>
+<iframe class="vllm-embed" src="assets/2026-08-19-kimi-k3-day0-support/interactive/page.html" title="Kimi K3 架构、注意力机制、缓存与性能图集" loading="lazy" style="height: 760px;"></iframe>
+<p><a href="assets/2026-08-19-kimi-k3-day0-support/interactive/page.html">单独打开本地图集</a>（可用“上一张 / 下一张”浏览全部本地静态备用图）</p>
+<details><summary>查看静态备用图</summary><img src="assets/2026-08-19-kimi-k3-day0-support/figure-01.png" alt="Kimi K3 在 SGLang 上的 Batch-1 解码速度优化过程"></details>
+
+<h2>Kimi K3 架构</h2>
+<p>K3 是一个总参数量 2.8 万亿的 MoE 模型，每个 token 激活 1040 亿参数，原生支持 100 万 token 上下文。K3 共有 93 层：69 层采用 KDA 线性注意力，24 层采用带门控的全局 MLA。第一层使用稠密 FFN，其余 92 层使用 Stable LatentMoE。93 层被划分为 8 个块，Attention Residual 在块之间聚合信息。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-02.png" alt="Kimi K3 完整架构"><figcaption>Kimi K3 完整架构（静态备用图）</figcaption></figure>
+
+<h3>KV 缓存内存估算</h3>
+<p>MLA 和 MHA 的 KV 缓存都会随上下文增长。K3 的 24 个 MLA 层合计在每张 GPU 上每个 token 需要约 27 KB 的压缩 KV 缓存，平均每层约 1.125 KB。若 93 层全部使用 MLA，一个 100 万 token 请求在单张 GPU 上约需 105 GB（1.125 KB × 93 × 100 万）。相同形状的未压缩 MHA 每层每个 token 需要 48 KB（96 个头 × 128 维 × K/V × bf16），超过 MLA 潜变量缓存的 40 倍。</p>
+<p>因此，K3 按 3 层 KDA、1 层 MLA 交错排列。KDA 的循环状态大小固定，不随上下文增长；每张 GPU 上每个请求约占 54 MB，并在每一步原地更新。MLA 则保留全局注意力。模型不使用显式位置编码（NoPE），位置信息由 KDA 的递归更新隐式表达。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-03.png" alt="全 MLA 与 KDA 加 MLA 的内存对比"><figcaption>全 MLA 与 KDA+MLA 混合方案的内存对比（静态备用图）</figcaption></figure>
+
+<h3>注意力机制详解：经典 MHA</h3>
+<p>在普通 MHA 中，解码第 $t$ 个 token 时，模型先把它的 KV 追加到缓存中，再分三步读取全部 $t$ 个条目：</p>
+<ul>
+<li><strong>打分：</strong>$z_{t,i}=\frac{q_t\cdot k_i}{\sqrt{d_k}}$，其中 $i\le t$。</li>
+<li><strong>归一化：</strong>$Z=\sum_{j=1}^{t}\exp(z_{t,j})$，$a_{t,i}=\exp(z_{t,i})/Z$。</li>
+<li><strong>聚合：</strong>$o_t=\sum_{i=1}^{t}a_{t,i}v_i$。</li>
+</ul>
+<p>长度为 $N$ 的序列大约要执行 $N^2/2$ 次点积，计算复杂度为 $O(N^2)$，缓存复杂度为 $O(N)$。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-04.png" alt="经典 MHA 的逐位置读取"><figcaption>经典 MHA 的逐位置读取（静态备用图）</figcaption></figure>
+
+<p>Softmax 注意力能够按位置读取历史信息，因此拥有最完整的全局记忆；代价是每生成一个新 token 都要重新扫描并保存全部历史。</p>
+<h3>注意力机制详解：线性注意力</h3>
+<p>线性注意力不再为每个 token 保留独立 KV，而是把历史累积到固定大小的矩阵：</p>
+<p>$$S=\sum_i k_i v_i^{\top}.$$</p>
+<p>$k$ 决定写入方向，$v$ 是写入内容，$q$ 通过 $o=S^{\top}q$ 读取。无论上下文多长，每一步都只读写固定大小的 $S$。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-05.png" alt="线性注意力的固定大小状态"><figcaption>线性注意力的固定大小状态（静态备用图）</figcaption></figure>
+
+<p>MHA 中每个历史 token 都有自己的 KV 位置；线性注意力状态 $S$ 没有 token 位置轴，因此读出会把所有历史写入混合在同一个固定状态中。</p>
+<h3>注意力机制详解：DeltaNet</h3>
+<p>朴素线性注意力只会累加，不会覆盖旧值。同一个键方向先写入 1、再写入 4，下一次读取会得到 $1+4$。在长达 100 万 token 的序列中，固定容量状态可能无法把不同上下文中的写入完全分开。</p>
+<p>DeltaNet 根据预测误差编辑状态。它引入标量门 $\beta_t$ 控制更新强度。先读取已有预测：</p>
+<p>$$r_{\text{old}}=S_{t-1}^{\top}k_t,$$</p>
+<p>再写入目标值与预测值之差：</p>
+<p>$$S_t=S_{t-1}+\beta_tk_t(v_t-r_{\text{old}})^{\top}.$$</p>
+<p>若键已归一化，新读出为：</p>
+<p>$$r_{\text{new}}=(1-\beta_t)r_{\text{old}}+\beta_tv_t.$$</p>
+<p>$\beta_t=1$ 表示完全替换，$\beta_t=0$ 表示不改写。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-06.png" alt="DeltaNet 的误差驱动状态更新"><figcaption>DeltaNet 的误差驱动状态更新（静态备用图）</figcaption></figure>
+
+<p>同方向改写得到解决后，仍有容量问题：无关键向量通常并不完全正交，一个方向的写入会投影到另一个方向并产生串扰。</p>
+<p>假设 $S=k_av_a^{\top}+k_bv_b^{\top}$，用 $q_a=k_a$ 读取：</p>
+<p>$$o_a=S^{\top}q_a=v_a+\cos\theta\cdot v_b,$$</p>
+<p>其中 $\theta$ 是两个键的夹角，第二项就是 B 泄漏到 A 中的串扰。一般情况下，$o(q)=\sum_i(k_i^{\top}q)v_i$，干扰由 Gram 矩阵 $G_{ij}=k_i^{\top}k_j$ 决定。$\mathbb{R}^{d_k}$ 最多容纳 $d_k$ 个两两正交方向，因此固定大小状态中的串扰无法消除，只能管理。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-07.png" alt="固定状态中的键方向串扰"><figcaption>固定状态中的键方向串扰（静态备用图）</figcaption></figure>
+
+<h3>注意力机制详解：KDA</h3>
+<p>KDA 以通道为单位门控。K3 的隐藏维度为 7168；96 个 KDA 头分别把它投影到 128 维，一个通道就是这个投影空间中的一个维度。键的第 $j$ 个通道决定内容写入 $S$ 第 $j$ 行时的系数。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-08.png" alt="KDA 中的通道与状态矩阵"><figcaption>KDA 中的通道与状态矩阵（静态备用图）</figcaption></figure>
+
+<p>KDA 为每个 token 和注意力头生成向量门 $\alpha_t$，用 $\mathrm{Diag}(\alpha_t)$ 缩放旧状态的各个通道，再执行 DeltaNet 改写：</p>
+<p>$$
+S_t=\big(I-\beta_tk_tk_t^{\top}\big)\mathrm{Diag}(\alpha_t)S_{t-1}+\beta_tk_tv_t^{\top}.
+$$</p>
+<p>其中 $\alpha_t\in(0,1)^{d_k}$，$\beta_t\in(0,1)$。把更新拆成两步：</p>
+<p>$$\tilde S=\mathrm{Diag}(\alpha_t)S_{t-1},$$</p>
+<p>$$S_t=\tilde S+\beta_tk_t(v_t-\tilde S^{\top}k_t)^{\top}.$$</p>
+<p>展开递归可得：</p>
+<p>$$
+S_t=\sum_{s\le t}\left[\prod_{u=s+1}^{t}\big(I-\beta_uk_uk_u^{\top}\big)\mathrm{Diag}(\alpha_u)\right]\beta_sk_sv_s^{\top}.
+$$</p>
+<p>越早的写入经历越多次门控和改写，衰减随距离累积，这让 K3 可以不使用 RoPE。K3 还通过缩放 Sigmoid 为对数衰减设置下限 $g_{\min}=-5$，使每一步保留比例高于 $e^{-5}\approx6.7\times10^{-3}$，从而控制分块计算的数值范围并让分块在 Tensor Core 上高效运行。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-09.png" alt="KDA 的逐通道门控与 Delta 改写"><figcaption>KDA 的逐通道门控与 Delta 改写（静态备用图）</figcaption></figure>
+
+<p>RoPE 用固定旋转显式编码位置；KDA 则通过可学习、依赖输入的衰减隐式建模位置。</p>
+<h3>Attention Residual</h3>
+<p>普通 Transformer 的残差流像一份从底层传到顶层的草稿，每层都修改同一页。到很深的层时，浅层细节已经和多次后续更新混合。</p>
+<p>Attention Residual 额外保留历史版本。K3 把 93 层划分为 8 个块，块内各层输出累加为一个块摘要。每层用自己的伪查询，对嵌入、此前块摘要，以及当前块截至此处的部分和进行加权，混合结果就是该层输入。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-10.png" alt="Attention Residual 每 12 层保存一个摘要"><figcaption>Attention Residual 每 12 层保存一个摘要（静态备用图）</figcaption></figure>
+
+<p>完整 AttnRes 为每个 token 保存 $L$ 个宽度为 $d$ 的层输出，复杂度为 $O(Ld)$。分块版本保存 $N=\lceil L/12\rceil$ 个摘要和嵌入，复杂度为 $O(Nd)$。K3 的 $L=93$，因此保存 8 个块摘要，加上嵌入共 $9\times7168$ 个数。分块把候选数从 93 降到 9，但 93 层仍各自执行一次检索。论文报告典型推理工作负载的端到端延迟开销低于 2%，训练端开销低于 4%。</p>
+<h3>LatentMoE</h3>
+<p>除第一层外，每个 FFN 都使用 MoE：每个 token 从 896 个路由专家中选 16 个，另有 2 个共享专家始终激活。路由专家选择率为 $16/896\approx1.8%$；整个模型每个 token 激活参数占比为 $104\text{B}/2.8\text{T}\approx3.7%$。</p>
+<p>路由仍基于完整的 7168 维隐藏状态打分，但专家在 3584 维潜空间中计算，再投影回完整宽度，从而把 All-to-All 分发流量和专家权重规模减半。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-11.png" alt="LatentMoE 在潜空间中执行专家计算"><figcaption>LatentMoE 在潜空间中执行专家计算（静态备用图）</figcaption></figure>
+
+<h2>SGLang 的首日适配</h2>
+<p>K3 会产生两类生命周期不同的推理状态：</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>MLA（24 层）</th>
+<th>KDA（69 层）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>状态形态</td>
+<td>KV 缓存，按 token 追加</td>
+<td>固定大小的循环状态</td>
+</tr>
+<tr>
+<td>增长方式</td>
+<td>每张 GPU 每个 token 约 27 KB</td>
+<td>TP=8 时每张 GPU 每个请求约 54 MB，每步原地覆盖</td>
+</tr>
+</tbody></table>
+<h3>RadixAttention：为 KDA 状态提供前缀缓存</h3>
+<p>传统 RadixAttention 可以共享只追加的注意力 KV；KDA 状态却会原地覆盖。SGLang 不让请求修改 Radix 树中的共享状态：树中保存只读检查点，命中前缀后通过写时复制恢复到请求私有工作槽，前向只修改副本。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-12.png" alt="KDA 状态的 RadixAttention 前缀缓存"><figcaption>KDA 状态的 RadixAttention 前缀缓存（静态备用图）</figcaption></figure>
+
+<h3>两类状态的内存管理</h3>
+<p>静态划分 KDA 和 MLA 区域时，负载偏离预估会导致一个区域已满、另一个仍空闲。SGLang 把二者放进同一个池：KDA 块从左侧分配，MLA 页从右侧分配，中间空闲空间共享。出现空洞时，用末端块填补，使两端保持紧凑。该功能通过 <code>--enable-unified-memory</code> 启用。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-13.png" alt="KDA 与 MLA 共享统一内存池"><figcaption>KDA 与 MLA 共享统一内存池（静态备用图）</figcaption></figure>
+
+<h3>分块流水线预填充</h3>
+<p>TP8 让八张 GPU 同步处理同一份预填充工作，每层都需要 AllReduce。分块 PP8 则把不同层段分配给 G1–G8，让不同 GPU 同时处理不同提示块，阶段间只传激活并与下一块计算重叠。长上下文下，流水线填充和排空开销会被摊薄。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-14.png" alt="Kimi K3 的分块流水线预填充"><figcaption>Kimi K3 的分块流水线预填充（静态备用图）</figcaption></figure>
+
+<p>解码通常每步只有一个新 token，不足以填满 PP8，因此 TP8 更合适。常见的预填充分离部署是“PP8 预填充 → TP8/DCP8 解码”。</p>
+<h3>解码上下文并行（DCP）</h3>
+<p>MLA 多个注意力头共享一个压缩 KV 潜变量，TP8 的每个 rank 都必须复制完整 KV。DCP 改为按 token 位置切分，每张 GPU 只在本地 $1/N$ KV 上计算部分注意力，再用一次打包 All-to-All 合并结果。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-15.png" alt="DCP 按 token 位置切分 MLA KV"><figcaption>DCP 按 token 位置切分 MLA KV（静态备用图）</figcaption></figure>
+
+<p>DCP 主要提高容量和并发。TP8+DCP8 仍只用 8 张 GPU，但 K3 的逻辑容量从约 150 万 token 增至 1220 万 token，约为 7.9 倍；48 个智能体会话时达到 541 token/s。代价是每个 MLA 层增加一次 All-to-All。</p>
+<h3>性能数据与基准结果</h3>
+<p>15 项内核和通信优化把非推测式 Batch-1 解码从 44.3 token/s 提升到 112.5 token/s；DSpark 推测解码达到约 423 token/s。</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-16.png" alt="Kimi K3 Batch-1 解码性能"><figcaption>Kimi K3 Batch-1 解码性能（静态备用图）</figcaption></figure>
+
+<p>在预填充分离部署中，总吞吐量与单用户速度之间存在权衡，不同目标对应不同并行布局：</p>
+<figure><img src="assets/2026-08-19-kimi-k3-day0-support/figure-17.png" alt="并行布局下的吞吐量与单用户速度"><figcaption>并行布局下的吞吐量与单用户速度（静态备用图）</figcaption></figure>
+
+<h2>致谢</h2>
+<p>Kimi K3 首日支持由 RadixArk 的 SGLang 与 Miles 团队、Moonshot AI 团队，以及 NVIDIA、AMD、Approaching AI、Baseten 和 Modal 共同完成。</p>
+<ul>
+<li>**AMD：**Wun-guo Huang、Xinyi Song、Hai Xiao、Soga Lin、Duyi Wang、Thomas Wang</li>
+<li>**Approaching AI：**Huanming Shen、Xiaohao Zhang、Nan Li、Mingxing Zhang</li>
+</ul>
+<p>感谢 DigitalOcean 提供 AMD 测试实例，也感谢 Google Cloud、DigitalOcean、Nebius、fal、RunPod、DeepInfra 和 GMI Cloud 使用 SGLang 提供 Kimi K3 服务。</p>
+<h2>延伸阅读</h2>
+<ul>
+<li><a href="https://arxiv.org/abs/2607.24653">Kimi K3 技术报告</a></li>
+<li><a href="https://www.lmsys.org/blog/2026-07-27-kimi-k3-day0-support/">LMSYS 博客：Kimi K3 首日支持</a></li>
+<li><a href="https://arxiv.org/abs/2510.26692">Kimi Linear：一种表达能力强且高效的注意力架构</a></li>
+<li><a href="https://arxiv.org/abs/2603.15031">Attention Residuals 技术报告</a></li>
+</ul>
+<p><em>本可视化教程由 <a href="https://github.com/Ccyest">Yichi Zhang</a> 与 SGLang 团队撰写。</em></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 SGLang 官方英文原文翻译。交互图与图片资源已本地化。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

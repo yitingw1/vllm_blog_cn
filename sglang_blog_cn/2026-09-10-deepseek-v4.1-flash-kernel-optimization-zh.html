@@ -1,0 +1,480 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s">
+  <title>SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s</h1>
+        <p class="original-title">DeepSeek-V4.1 Flash on SGLang: from 35 to 873 tokens/s</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-09-10</span>
+          <a href="https://www.sglang.io/blog/deepseek-v4.1-flash-kernel-optimization">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p align="center">
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-01.png" alt="SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s" width="100%">
+</p>
+
+<p>SGLang 团队同时完成了 DeepSeek-V4.1 Flash 的 Day-0 支持和内核优化。在 4×GB300 上、批大小（BS）为 1 时，纯解码速度从首个可运行版本的 35 token/s 提升到 203 token/s。启用 DSpark 后，团队继续优化验证阶段、MoE 和小批量投影，最后将 MoE 切换到带 padding 的 TP4。最终配置使用 Attention TP4、MoE TP4（EP1）、4,096 个随机输入 token、1,024 个输出 token，并将模拟接受长度固定为 5.5，在 BS=1 时达到 873.63 token/s。本文介绍模型架构发生的变化，以及这些内核优化是如何逐步实现的。</p>
+<iframe class="vllm-embed" src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/interactive/page.html" title="交互图 1" loading="lazy" style="height: 760px;"></iframe>
+
+<p><a href="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/interactive/page.html">单独打开本地交互页面</a>（可用“上一张 / 下一张”浏览全部本地静态备用图）</p>
+
+<details><summary>查看静态备用图</summary><img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-01.png" alt="交互图 1"></details>
+
+<p>有关发布范围和运行配方，请参阅 <a href="2026-09-09-deepseek-v4.1-day0-support-zh.html">Day-0 支持文章</a>和 <a href="https://www.lmsys.org/blog/2026-09-10-deepseek-v41">LMSYS 文章</a>。</p>
+<h2>架构变更与 KV 缓存压缩</h2>
+<p>V4.1 Flash 的主干比 V4 Flash 更大，但处理每个输入 token 时激活的参数更少，KV 缓存也小得多。以下几项对推理服务最为关键：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>V4 Flash</th>
+<th>V4.1 Flash</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主干参数</td>
+<td>284B</td>
+<td>552B，另含 196B Engram 记忆参数</td>
+</tr>
+<tr>
+<td>每个 token 激活参数</td>
+<td>约 13B</td>
+<td>输入约 8B，输出约 16B</td>
+</tr>
+<tr>
+<td>结构</td>
+<td>43 个解码器层</td>
+<td>20 个因果编码器层 + 20 个解码器层</td>
+</tr>
+<tr>
+<td>全局注意力</td>
+<td>CSA / HCA</td>
+<td>CSA2，KV 和索引跨层共享</td>
+</tr>
+<tr>
+<td>每个 token 的全局 KV</td>
+<td>3,514 字节</td>
+<td>890 字节</td>
+</tr>
+</tbody></table>
+<p>数据来自<a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash">模型配置</a>和<a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf">技术报告</a>。</p>
+<p>因果编码器—解码器结构减少了预填充计算。20 个解码器层从编码器的最终输出中取得全局 KV，因此长提示主要由前 20 层处理。解码器仍需要局部窗口，并通过重放最后 128 个 token 来重建它。这使主干中的预填充工作量大致减半。生成阶段则不同：每个新 token 仍会经过全部 40 层。</p>
+<figure>
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-02.png" alt="交互图 2">
+<figcaption>交互图 2（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>KV 缓存压缩来自跨层共享、池化和 FP4 存储。40 层中只有第 2、8、14 和 20 层这 4 层生成全局 KV，其余层读取这些缓存，少数层会重新计算自己的索引。前三组缓存把每两个 token 池化为一个条目，最后一组则为每个 token 保留一个条目。每个条目以 FP4 存储：主 KV 占 288 字节，索引器 K 占 68 字节。因此，每个原始 token 的逻辑存储量为：</p>
+<p>$$
+(288 + 68) \times \left(\frac{3}{2} + 1\right) = 890\ \text{字节}。
+$$</p>
+<p>这大约是 V4 Flash 的四分之一。由于局部窗口始终可以通过重放重建，需要持久保存的状态更少；DeepSeek 给出的 SSD 缓存需求约为此前的八分之一。需要注意的是，890 字节是逻辑大小。SGLang 的部分路径仍使用与 FlashMLA 兼容的缓存布局，因此实际分配的内存会有所不同。</p>
+<p>内核优化还涉及另外两个架构组件。CSA2 使用分层候选过滤器缩小索引器的搜索范围，最终仅让排名前 512 的全局位置参与注意力计算。Engram 通过 n-gram 查找引入条件记忆。两者在模型中承担不同职责，也分别带来了新的索引、归一化和融合工作。</p>
+<h2>纯解码的内核优化</h2>
+<p>首先回顾纯解码如何从首个可运行版本的 35 token/s 提升到 203 token/s。本节使用最初的测量结果；DSpark 一节则切换到文末描述的随机 4k/1k 工作负载。</p>
+<h3>FP8 GEMM：35 → 118 token/s</h3>
+<p>FP8 中提供了一些密集权重，但它们的量化块和比例布局与后端的预期不符，因此这些 GEMM 采取了较慢的回退路径。现在，当加载权重时，我们重新排列缩放因子布局一次，它们会直接进入 Blackwell MXFP8 GEMM。</p>
+<p>仅这一项就让 BS=1 的速度从 35.2 提升到 117.8 token/s。适配新模型时，先确认 GEMM 实际调度到了哪个内核，通常比一开始就调整 tile 更有价值。</p>
+<h3>小算子融合和 GEMV</h3>
+<p>逐 token 解码会执行一长串耗时很短的内核。RoPE、FP4 量化、压缩器池化、RMSNorm 和缓存写入前后直接相连，因此把相邻操作融合起来，每次都能省去一次内核启动和一次显存往返。</p>
+<table>
+<thead>
+<tr>
+<th>融合项</th>
+<th>实现</th>
+<th align="right">BS=1 速度（token/s）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>RoPE + FP4</td>
+<td>在一个内核中完成旋转、量化与反量化</td>
+<td align="right">117.8 → 133.5</td>
+</tr>
+<tr>
+<td>C2 压缩器</td>
+<td>相邻 token 的归一化、池化与状态写入</td>
+<td align="right">148.4 → 152.1</td>
+</tr>
+<tr>
+<td>WO-A、归一化、Engram 门控</td>
+<td>单行投影采用 GEMV；小型归一化和门控采用融合内核</td>
+<td align="right">186.6 → 203.3</td>
+</tr>
+</tbody></table>
+<p>我们还不再在每一层重建当前步的请求索引和暂存缓冲区，而是跨层共享它们，从而减少了大量重复转换和初始化，并将 BS=1 从 146.5 提升到 148.4 token/s。快速路径通过验证后被默认启用。</p>
+<h3>mHC：归约融合与重叠</h3>
+<p>mHC 保留四条残差流，而不是一条。每个注意力和 MoE 子层都要计算这些残差流的混合系数，并用 Sinkhorn 对系数进行归一化。单次计算并不昂贵，但每层的注意力和 MoE 都各执行一次，在小批量场景下累积开销不可忽视。根据输入行数选择 tile 大小，再把统计量归约与 Sinkhorn 融合后，BS=1 先从 133.5 提升到 141.1，随后达到 146.5 token/s。</p>
+<figure>
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-03.png" alt="交互图 3">
+<figcaption>交互图 3（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>更大的增益来自 V4.1 对单遍 mHC 的定义。预混合使用前一个子层生成的系数，因此当前的注意力或 MoE 可以与本子层的统计量计算并行执行。两部分运行在不同 CUDA stream 上，并在后混合阶段汇合。配合压缩器和索引器的融合与重叠，BS=1 从约 152 提升到 186 token/s。</p>
+<h2>DSpark 适配与优化</h2>
+<p>官方检查点自带 DSpark，其中包含三个轻量级草稿块。它们读取主模型最后几层的隐藏状态，一次为多个位置生成 logits，用 Markov head 处理草稿 token 之间的依赖关系，然后把整块候选交给目标模型进行批量验证。</p>
+<figure>
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-04.png" alt="交互图 4">
+<figcaption>交互图 4（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>我们将块大小固定为 5，并以目标接受长度 5.5 来模拟接受。计算锚点后，目标验证单个请求最多可处理 6 行。普通解码每个请求处理一行，因此必须针对这些小批量重新设计 M=1 快速路径。</p>
+<p>第一组优化集中在验证和 MoE。我们把 mHC 重叠接入验证与草稿阶段，并让 WO-A 投影直接写入下一阶段所需的布局。候选掩码把有效长度检查与候选处理融合起来，减少了对大型缓冲区的扫描。MoE 方面，路由器直接输出专家所需的布局，输入量化与路由重叠执行；专家加权归约、共享专家相加和 all-reduce 合并成一步，从而减少中间结果回写。</p>
+<p>接下来优化小批量投影和归一化。WO-A 使用 split-K，让更多线程块可以并行工作；mHC 则把四条残差流的混合与 RMSNorm 融合。草稿模型的多个 KV 投影也改为复用 MXFP8 权重和 scale，而不再使用旧的 FP8 路径。</p>
+<p>随后进一步融合索引器后处理与投影。Top-K 之后的分数检查、无效位置过滤和 KV 页地址转换被合并为一步，选中的候选块会直接展开为 token mask。Q 的 RoPE 合并进注意力缓冲区写入；WO-A 的 split-K 归约则直接执行后续 MXFP8 量化，省去中间张量。</p>
+<p>随后优化 L2、L8 和 L14（从 0 开始编号）中的验证阶段压缩。此前，这三层会依次运行多个小算子，用来查找前一个 token、处理 mask、执行池化并写入缓存。由于验证位置连续，同一请求内可以直接读取上一行，只有第一行需要访问环形缓冲区。我们把成对池化、RMSNorm、RoPE、量化和主 KV 写入融合进一个内核，并让索引器 K 复用这条融合写入路径。</p>
+<p>最后，MoE 从 EP4 切换到带 padding 的 TP4。按 TP4 切分后，每张 GPU 上的专家中间维度为 576，并在加载权重时填充到 640 以适配内核。每张 GPU 计算同一批专家的不同切片，因此专家负载不均时，各 rank 之间的等待更少。在保留上述全部优化的同轮对比中，EP4 达到 854.64 token/s，TP4 达到 873.63 token/s，提升 2.22%；trace 中，各 rank 到达 finalize 的中位时间差从 11.14 µs 降至 3.40 µs。</p>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th align="right">BS=1 输出速度（token/s）</th>
+<th align="right">实测接受长度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DSpark，优化前</td>
+<td align="right">558.24</td>
+<td align="right">5.505</td>
+</tr>
+<tr>
+<td>+ 验证 / MoE 融合与重叠</td>
+<td align="right">718.75</td>
+<td align="right">5.505</td>
+</tr>
+<tr>
+<td>+ 小批量投影 / mHC 融合</td>
+<td align="right">761.71</td>
+<td align="right">5.505</td>
+</tr>
+<tr>
+<td>+ 索引器后处理 / Q RoPE / WO-A 量化</td>
+<td align="right">802.38</td>
+<td align="right">5.505</td>
+</tr>
+<tr>
+<td>+ C2 验证压缩融合</td>
+<td align="right">853.49</td>
+<td align="right">5.520</td>
+</tr>
+<tr>
+<td>全部优化，MoE 改用 TP4 + padding</td>
+<td align="right">873.63</td>
+<td align="right">5.505</td>
+</tr>
+</tbody></table>
+<p>在随机 4k/1k 工作负载上，将模拟接受长度目标设为 5.5 后，输出速度从 558.24 提升到 873.63 token/s，增幅约 56.5%。表中的 853.49 是 C2 验证压缩融合完成时的测量值；前文所述的 2.22% 则来自同一轮 EP4/TP4 对比。</p>
+<p>这些结果均未使用 DeepSeek 随 V4.1 发布的新内核。</p>
+<h2>如何复现：随机 4k/1k，模拟接受长度固定为 5.5</h2>
+<p>本节重现了图中的 DSpark 点 11 到 16：4,096 个随机输入token、固定的 1,024 个输出token和目标为 5.5 的模拟接受长度。服务器配置控制接受长度，每个版本都使用相同的输入。</p>
+<p>在 4×GB300 上，使用 <a href="https://github.com/BBuf/sglang/tree/835c39094ad017c2f54f8ea598002e669e6fa30d">BBuf/sglang@835c3909</a> 的 SGLang 代码，以及 <a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/tree/dba1be0a40aa45a94ad051997016db3960a90277">revision dba1be0a</a> 的官方检查点。软件版本为 PyTorch 2.13.0+cu130、FlashInfer 0.6.18、Triton 3.7.1、sglang-kernel 0.4.6.post1、sgl-deep-gemm 0.1.7 和 CUTLASS DSL 4.6.2。</p>
+<p>下面是达到 873.63 token/s 的 TP4 服务命令，请在该 SGLang checkout 的仓库根目录运行。<code>--tp 4 --ep-size 1</code> 表示 Attention 和 MoE 都使用 TP4；此版本会在加载权重时应用 padding。</p>
+<pre><code class="language-bash">export MODEL_PATH=/path/to/DeepSeek-V4.1-Flash
+export SGLANG_RAGGED_VERIFY_MODE=static
+export SGLANG_SIMULATE_ACC_LEN=5.5
+export SGLANG_SIMULATE_ACC_METHOD=match-expected
+
+CUDA_VISIBLE_DEVICES=0,1,2,3 PYTHONPATH=&quot;$PWD/python&quot; MAX_JOBS=16 \
+python -m sglang.launch_server \
+  --model-path &quot;$MODEL_PATH&quot; \
+  --served-model-name deepseek-ai/DeepSeek-V4.1-Flash \
+  --tp 4 --ep-size 1 --trust-remote-code \
+  --moe-a2a-backend none --moe-runner-backend flashinfer_mxfp4 \
+  --mem-fraction-static 0.80 --max-total-tokens 33554432 \
+  --chunked-prefill-size 4096 \
+  --cuda-graph-bs-decode 1 2 4 8 16 32 64 \
+  --max-running-requests 128 \
+  --speculative-algorithm DSPARK --speculative-dspark-block-size 5 \
+  --skip-server-warmup --reasoning-parser deepseek-v41 \
+  --random-seed 42 --decode-log-interval 10 \
+  --host 127.0.0.1 --port 30021
+</code></pre>
+<figure>
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-05.png" alt="交互图 5">
+<figcaption>交互图 5（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>要重现 EP4 比较，请将 <code>--ep-size 1</code> 更改为 <code>--ep-size 4</code> 并保留其他所有内容。完整的 TP4 启动脚本可作为 <a href="https://raw.githubusercontent.com/BBuf/how-to-optim-algorithm-in-cuda/master/large-language-model/sglang/assets/deepseek-v41-kernel-journey/random-dspark/launch-tp4.sh">launch-tp4.sh</a> 获得。</p>
+<p>输入使用固定随机种子 <code>42</code> 生成：先从模型词表中排除特殊 token，再均匀抽取 4,096 个 token ID。这些 ID 不经过聊天模板，直接作为输入，并被所有配置重复使用。</p>
+<ul>
+<li><a href="https://raw.githubusercontent.com/BBuf/how-to-optim-algorithm-in-cuda/master/large-language-model/sglang/assets/deepseek-v41-kernel-journey/random-dspark/prompt.json">随机输入</a> (<code>prompt.json</code>)。</li>
+<li><a href="https://github.com/BBuf/how-to-optim-algorithm-in-cuda/tree/master/large-language-model/sglang/assets/deepseek-v41-kernel-journey/random-dspark">输入构造、基准测试脚本和每次运行结果</a>。</li>
+</ul>
+<p>在第二个终端中运行：</p>
+<pre><code class="language-bash">ASSET_URL=https://raw.githubusercontent.com/BBuf/how-to-optim-algorithm-in-cuda/master/large-language-model/sglang/assets/deepseek-v41-kernel-journey/random-dspark
+curl -fL &quot;$ASSET_URL/prompt.json&quot; -o prompt.json
+curl -fL &quot;$ASSET_URL/benchmark.py&quot; -o benchmark.py
+python -m pip install requests
+python benchmark.py bench --prompt prompt.json --max-tokens 1024 --out result --repeat 6
+</code></pre>
+<figure>
+<img src="assets/2026-09-10-deepseek-v4.1-flash-kernel-optimization/figure-06.png" alt="交互图 6">
+<figcaption>交互图 6（原文交互图的本地静态备用图）</figcaption>
+</figure>
+
+<p>脚本使用 <code>temperature=0</code> 和 <code>ignore_eos=True</code>，并在每次运行时检查输入是否为 4,096 个 token、输出是否为 1,024 个 token。请求通过 <code>/generate</code> 发出；服务器启动后，脚本会调用 <code>/freeze_gc</code>，每轮运行前清空缓存，并丢弃一次预热结果。每次服务器启动测量 6 轮。小批量投影、索引器后处理/投影融合、C2 验证和 TP4 配置都分别独立启动两次，并对 12 轮结果取中位数。本轮 EP4/TP4 对比按 TP、EP、TP、EP 的顺序交替启动，保留全部测量值；测量吞吐量时关闭 profiler。</p>
+<p><code>match-expected</code> 每轮接受 5 或 6 个 token，因此期望接受长度为 5.5。有限轮数以及最后一步的截断会让实测值略有偏移，表格中保留的是实际测量结果。这里的接受过程是模拟的，因此生成文本不用于判断答案质量；模拟模式也会禁用 CUDA Graph 内部的接受路径。</p>
+<p>吞吐量的计算方法是：用第一个流式事件之后新增的 token 数，除以从第一个事件到最后一个事件的时间；完整预填充阶段不计入。接受长度会计入目标模型生成的那个 token，因此草稿块大小为 5 时，上限为 6。</p>
+<p>下表并列比较关闭与启用 DSpark 的结果，以及 MoE TP4 + padding 配置。所有条目使用同一份代码、相同的随机输入、相同的输出长度和相同的计时方法；Attention 始终使用 TP4，表头中的 EP4/TP4 指 MoE 配置。</p>
+<table>
+<thead>
+<tr>
+<th>工作负载与指标</th>
+<th align="right">DSpark 关闭 · EP4</th>
+<th align="right">DSpark 开启 · EP4</th>
+<th align="right">DSpark 开启 · TP4 + padding</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>BS=1 输出速度（token/s）</td>
+<td align="right">223.50</td>
+<td align="right">853.49</td>
+<td align="right">873.63</td>
+</tr>
+<tr>
+<td>BS=1 实测接受长度（模拟目标 5.5）</td>
+<td align="right">—</td>
+<td align="right">5.520</td>
+<td align="right">5.505</td>
+</tr>
+</tbody></table>
+<h2>相关链接</h2>
+<ul>
+<li><a href="https://www.lmsys.org/blog/2026-09-10-deepseek-v41">LMSYS 博客：SGLang 和 Miles 为 DeepSeek-V4.1 添加 Day-0 支持</a>：团队完整的 day-0 文章，涵盖推理和 RL 训练。</li>
+<li><a href="https://docs.sglang.io/cookbook/autoregressive/DeepSeek/DeepSeek-V4_1">SGLang DeepSeek-V4.1部署指南</a>：启动配置、硬件支持和调优说明。</li>
+<li><a href="https://github.com/sgl-project/sglang/tree/dsv4.1">SGLang DeepSeek-V4.1 代码</a>，dsv4.1 分支。</li>
+<li><a href="https://miles.radixark.com/docs/models/deepseek/deepseek-v4-1-flash">Miles DeepSeek-V4.1 Flash 训练指南</a>：训练环境、检查点准备和 RL 启动配置。</li>
+<li><a href="https://github.com/radixark/miles">Miles GitHub 仓库</a>。</li>
+<li><a href="https://huggingface.co/deepseek-ai/DeepSeek-V4.1-Flash/blob/main/DeepSeek_V41_Tech_Report.pdf">DeepSeek-V4.1技术报告</a>。</li>
+</ul>
+<p>对于内核实现，请直接参见<a href="https://github.com/BBuf/sglang/blob/835c39094ad017c2f54f8ea598002e669e6fa30d/python/sglang/kernels/ops/attention/dsv4/c2.py">C2验证压缩</a>、<a href="https://github.com/BBuf/sglang/blob/835c39094ad017c2f54f8ea598002e669e6fa30d/python/sglang/kernels/ops/attention/dsv4/indexer_postprocess.py">索引器后处理</a>、<a href="https://github.com/BBuf/sglang/blob/835c39094ad017c2f54f8ea598002e669e6fa30d/python/sglang/kernels/ops/attention/dsv4/q_rope_store.py">Q RoPE / store</a>和<a href="https://github.com/BBuf/sglang/blob/835c39094ad017c2f54f8ea598002e669e6fa30d/python/sglang/kernels/ops/attention/dsv4/wo_a_bf16_small_batch.py">WO-A / MXFP8</a>。</p>
+<h2>致谢</h2>
+<p>感谢 DeepSeek 团队开源 DeepSeek-V4.1，感谢 SGLang 和 Miles 团队以及社区中在模型支持、内核、测试和审查方面提供帮助的每个人。一些内核是使用 KDA 0.5 框架开发的，我们感谢 <a href="https://github.com/humanfia/humanize2">Humanize</a> 和 <a href="https://github.com/NVlabs/kda">Kernel Design Agents</a> 提供的工具和工作流程。</p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 SGLang 官方英文原文翻译。图片与交互页面已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

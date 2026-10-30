@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SGLang 统一 Radix Cache：用一棵树实现混合模型的前缀缓存">
+  <title>SGLang 统一 Radix Cache：用一棵树实现混合模型的前缀缓存</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>SGLang 统一 Radix Cache：用一棵树实现混合模型的前缀缓存</h1>
+        <p class="original-title">Unified Radix Cache in SGLang: one tree for hybrid model prefix caching</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-09-23</span>
+          <a href="https://www.sglang.io/blog/unified-radix-cache">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p>本文改编自 <a href="https://www.lmsys.org/blog/2026-08-11-unified-radix-cache/">LMSYS 关于统一 Radix Cache 的文章</a>。</p>
+<h2>背景</h2>
+<p>当前缀 token 相同时，前缀缓存可以复用 KV。在全注意力（full attention）模型中，后续请求能够直接复用已经缓存的前缀，只计算新增的 token。</p>
+<p>混合模型同时使用三类数据，而它们的复用规则各不相同：FULL（全注意力）需要匹配前缀上的 KV；SWA（滑动窗口注意力，sliding window attention）需要复用边界之前的一段连续窗口；MAMBA 则需要该边界处循环状态的快照，也就是检查点（checkpoint）。</p>
+<p>DeepSeek-V4 组合了 FULL 与 SWA，Kimi-K3 为其 KDA 循环状态组合了 FULL 与 MAMBA，Inkling 则同时使用三者。SGLang 在一棵共享树上处理这些组合，每个组件自行定义复用规则。</p>
+<h2>统一 Radix Cache</h2>
+<h3>设计与机制</h3>
+<p>每个 radix 节点保存一段 token，并为每个组件提供一个槽位。FULL 和 SWA 槽位保存 KV 页索引；MAMBA 保存前缀终点处的检查点。SWA 必需窗口之外的数据可以继续留在缓存中，也可以独立淘汰；淘汰后会留下一个称为“墓碑”（tombstone）的空槽位。</p>
+<p>各组件分别处理自身的节点拆分、插入、锁定和淘汰。回收节点中的部分 SWA 数据时，系统会先在保留边界处分裂节点。MAMBA 检查点仍位于原来的前缀终点；请求复用该检查点时，通过写时复制（copy-on-write）获得一份私有副本，然后继续更新自身状态。</p>
+<h3>安全复用边界</h3>
+<p>匹配过程沿已命中的路径向前遍历，每个组件都会在每个候选边界检查自身数据。每个候选边界都独立评估，计算从所有组件共同接受的最深边界继续执行。</p>
+<h2>跨内存层级的 HiCache</h2>
+<p>HiCache 将统一 Radix Cache 扩展到 GPU L1、主机内存 L2 和外部存储 L3。有关分层和数据传输机制，请参阅 <a href="https://yichizhang.dev/AI-Infra-Visualized/en/lessons/hicache/">SGLang 中的 HiCache</a>。</p>
+<h3>组件与边车数据</h3>
+<p>DeepSeek-V4 的 FULL 和 SWA 使用彼此独立、由分配器映射的页索引。压缩 KV、索引器缓冲区和压缩器状态等辅助池作为边车数据（sidecar）：它们共享所属组件的索引和数据传输流程，其中三个跟随 FULL，两个跟随 SWA。</p>
+<h3>多轮基准测试</h3>
+<p>多轮对话会不断延长可复用的前缀。对比仅使用 L1、L1+L2，以及额外加入 500 GiB Mooncake L3 的配置后，DeepSeek-V4-Flash 在 L3 配置下的有效输入吞吐量达到 145.5K token/s，而仅使用 L1 时为 9.4K token/s；平均首 token 延迟（TTFT）保持在 9 秒以内。</p>
+<h2>会话感知淘汰</h2>
+<p>应用使用稳定的 <code>session_id</code> 标识同一段对话中的请求。SGLang 会跟踪该会话对缓存条目的引用；调用 <code>/close_session</code> 会删除这个会话的引用，共享前缀仍会保留其他会话的引用。</p>
+<p>对于已解锁且可以淘汰的 FULL 条目，系统依次按照是否存在引用、引用计数和基础淘汰策略排序，通常会优先回收没有引用的数据。会话保留策略适用于 L1/L2；L3 的淘汰则由存储后端负责。</p>
+<h3>SWE-bench 结果</h3>
+<p>在 SWE-bench 上，与 HiRadixCache 和 LRU 相比，同时启用统一 Radix Cache 与会话感知淘汰后，DeepSeek-V4-Pro 的 TTFT 最多降低 11.0%，Qwen3.5-397B-A17B 最多降低 16.6%。</p>
+<h2>Rust 树核心</h2>
+<p>SGLang 使用 Rust 执行树遍历、锁记账和 LRU 更新，以降低调度器上的 CPU 开销。Python 负责物理 KV 分配和缓存编排，并把 Rust 返回的操作应用到各个池中。</p>
+<p>Python 侧负责：</p>
+<ul>
+<li>请求到 token 的映射</li>
+<li>物理 KV 分配</li>
+<li>池操作与编排</li>
+</ul>
+<p>Rust 侧负责：</p>
+<ul>
+<li>radix 拓扑</li>
+<li>各组件的锁记账</li>
+<li>侵入式 LRU 链表</li>
+<li>淘汰遍历</li>
+</ul>
+<p>仅支持 L1 的 Rust 原型 <a href="https://github.com/sgl-project/sglang/pull/29074">#29074</a> 在一项 <a href="https://github.com/lm-sys/lm-sys.github.io/tree/main/scripts/rust_radix_cache/multi_turn">200 轮对话基准测试</a>中，相比 Python 树将 SWA 的 TTFT 降低 38%，全注意力降低 10%，混合 SSM 降低 5%。</p>
+<p>随后合入的 <a href="https://github.com/sgl-project/sglang/pull/32710">Rust TreeCore #32710</a> 支持 FULL、SWA 和 MAMBA 的各种组合，并支持 HiCache。会话感知缓存目前仍使用 Python 树核心。</p>
+<h2>延伸阅读</h2>
+<ul>
+<li><a href="https://www.lmsys.org/blog/2026-08-11-unified-radix-cache/">LMSYS 博客：Unified Radix Cache: One Tree for Hybrid Model Prefix Caching</a></li>
+<li><a href="https://github.com/sgl-project/sglang/pull/32710">sglang#32710：[Radix Cache] 添加带共享一致性测试的 Rust TreeCore 后端</a></li>
+<li><a href="https://github.com/sgl-project/sglang/issues/20415">sglang#20415：[路线图] Unified Hybrid Radix Cache 重构</a></li>
+<li><a href="https://github.com/sgl-project/sglang/issues/21846">sglang#21846：[路线图] 面向智能体工作负载的 SGLang 分布式 KVCache 系统</a></li>
+<li><a href="https://github.com/sgl-project/sglang/pull/29074">sglang#29074：[WIP] Rust Unified Radix Cache（仅 L1）</a></li>
+<li><a href="https://github.com/lm-sys/lm-sys.github.io/tree/main/scripts/rust_radix_cache/multi_turn">Rust 原型：复现脚本</a></li>
+<li><a href="https://docs.sglang.io/docs/advanced_features/hicache_design">SGLang HiCache 系统设计</a></li>
+</ul>
+<p><em>可视化教程由 <a href="https://github.com/Ccyest">Yichi Zhang</a> 与 SGLang 团队编写。</em></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 SGLang 官方英文原文翻译。文中资源已本地化。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
