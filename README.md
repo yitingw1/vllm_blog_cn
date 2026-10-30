@@ -2,6 +2,8 @@
 
 vLLM 官方博客的中文翻译与本地交互版本。
 
+SGLang 官方博客的中文翻译单独保存在 [`sglang_blog_cn/`](sglang_blog_cn/README.md)。
+
 ## 文章
 
 - [GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载](2026-09-08-glm53-part1-hybrid-sparse-offloading-zh.html)（[英文原文](https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading)）
