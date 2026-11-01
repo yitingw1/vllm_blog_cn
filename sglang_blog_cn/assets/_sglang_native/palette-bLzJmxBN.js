@@ -1,0 +1,1 @@
+const c={mid:"#D4612DCC",light:"#F5F0E0CC",deep:"#944C2ECC",apricot:"#F1B78BCC",accent:"#CCEBB6CC",accent2:"#9EB4CBCC",text:"#565D66",ink:"#26221C"},e=["var(--palette-mid)","var(--palette-apricot)","var(--palette-deep)","var(--palette-accent)","var(--palette-accent2)"];function n(a){const t=e.length,C=((Math.round(a)-1)%t+t)%t;return e[C]}export{c as P,n as c};

@@ -1,0 +1,1 @@
+import{j as e}from"./index-ChgiYNvj.js";function i({items:l}){return e.jsx("div",{className:"viz-legend",role:"list",children:l.map(s=>e.jsxs("span",{className:"viz-legend-item",role:"listitem",children:[e.jsx("span",{className:"viz-swatch",style:s.swatch}),s.label]},s.label))})}export{i as L};
