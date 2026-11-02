@@ -1,0 +1,46 @@
+name: Deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - name: Prepare public site
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/sglang_blog_cn
+          cp index.html .nojekyll _site/
+          find . -maxdepth 1 -type f -name '*-zh.html' -exec cp '{}' _site/ \;
+          cp -R assets _site/assets
+          find sglang_blog_cn -maxdepth 1 -type f -name '*-zh.html' -exec cp '{}' _site/sglang_blog_cn/ \;
+          cp -R sglang_blog_cn/assets _site/sglang_blog_cn/assets
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Deploy
+        id: deployment
+        uses: actions/deploy-pages@v4

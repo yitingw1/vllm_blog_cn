@@ -2,6 +2,8 @@
 
 vLLM 官方博客的中文翻译与本地交互版本。
 
+**在线阅读：** [LLM 推理博客中文站](https://yitingw1.github.io/vllm_blog_cn/)
+
 SGLang 官方博客的中文翻译单独保存在 [`sglang_blog_cn/`](sglang_blog_cn/README.md)。
 
 ## 文章

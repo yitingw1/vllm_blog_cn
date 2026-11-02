@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="vLLM 与 SGLang 官方博客中文翻译及原生交互版本">
+  <title>LLM 推理博客中文站</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef3f8;
+      --panel: rgba(255, 255, 255, .92);
+      --ink: #172033;
+      --muted: #65738a;
+      --line: #d8e1ec;
+      --brand: #1467d2;
+      --brand-soft: #e8f1ff;
+      --sglang: #b94b17;
+      --shadow: 0 18px 50px rgba(32, 56, 85, .13);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 12% 0%, rgba(80, 152, 255, .16), transparent 32rem),
+        radial-gradient(circle at 92% 16%, rgba(255, 151, 78, .13), transparent 28rem),
+        var(--bg);
+      color: var(--ink);
+      font: 15px/1.55 "Microsoft YaHei", "PingFang SC", system-ui, sans-serif;
+    }
+    button, input { font: inherit; }
+    button, a { -webkit-tap-highlight-color: transparent; }
+    .app { min-height: 100%; padding: 18px; }
+    .shell {
+      width: min(1760px, 100%);
+      height: calc(100vh - 36px);
+      min-height: 680px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 350px minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid rgba(190, 204, 221, .9);
+      border-radius: 22px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+    }
+    .sidebar {
+      display: flex;
+      min-width: 0;
+      flex-direction: column;
+      border-right: 1px solid var(--line);
+      background: rgba(248, 251, 255, .88);
+    }
+    .brand { padding: 22px 22px 16px; }
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--brand);
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 { margin: 0; font-size: 23px; line-height: 1.25; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+    .controls { padding: 0 16px 14px; }
+    .search {
+      width: 100%;
+      padding: 11px 13px;
+      color: var(--ink);
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      outline: none;
+      background: #fff;
+    }
+    .search:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(20, 103, 210, .12); }
+    .filters { display: flex; gap: 7px; margin-top: 10px; }
+    .filter {
+      flex: 1;
+      padding: 7px 9px;
+      cursor: pointer;
+      color: var(--muted);
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+    }
+    .filter.active { color: #fff; border-color: var(--brand); background: var(--brand); }
+    .article-list { flex: 1; overflow: auto; padding: 2px 10px 18px; }
+    .article {
+      width: 100%;
+      margin: 3px 0;
+      padding: 12px;
+      cursor: pointer;
+      text-align: left;
+      color: inherit;
+      border: 1px solid transparent;
+      border-radius: 12px;
+      background: transparent;
+    }
+    .article:hover { background: #fff; border-color: var(--line); }
+    .article.active { background: var(--brand-soft); border-color: #b9d3f7; }
+    .article-title { display: block; font-weight: 700; line-height: 1.45; }
+    .article-meta { display: flex; align-items: center; gap: 7px; margin-top: 6px; color: var(--muted); font-size: 12px; }
+    .source {
+      padding: 1px 7px;
+      color: var(--brand);
+      border: 1px solid #bad3f5;
+      border-radius: 999px;
+      background: #f4f8ff;
+      font-weight: 700;
+    }
+    .source.sglang { color: var(--sglang); border-color: #f0c6b3; background: #fff7f2; }
+    .empty { padding: 28px 12px; color: var(--muted); text-align: center; }
+    .viewer { min-width: 0; display: flex; flex-direction: column; background: #fff; }
+    .toolbar {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 17px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, .96);
+    }
+    .menu { display: none; }
+    .current { min-width: 0; flex: 1; }
+    .current-title { overflow: hidden; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+    .current-meta { color: var(--muted); font-size: 12px; }
+    .open {
+      flex: none;
+      padding: 8px 13px;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 9px;
+      background: var(--brand);
+    }
+    .open:hover { background: #0e57b5; }
+    iframe { flex: 1; width: 100%; min-height: 0; border: 0; background: #fff; }
+    .footer {
+      padding: 10px 14px;
+      color: var(--muted);
+      border-top: 1px solid var(--line);
+      background: #fbfcfe;
+      font-size: 12px;
+      text-align: center;
+    }
+    .footer a { color: var(--brand); }
+    @media (max-width: 900px) {
+      .app { padding: 0; }
+      .shell { height: 100vh; min-height: 0; grid-template-columns: 1fr; border: 0; border-radius: 0; }
+      .sidebar { position: fixed; z-index: 5; inset: 0 15% 0 0; transform: translateX(-105%); box-shadow: var(--shadow); transition: transform .2s ease; }
+      body.menu-open .sidebar { transform: translateX(0); }
+      body.menu-open::after { content: ""; position: fixed; z-index: 4; inset: 0; background: rgba(18, 28, 42, .35); }
+      .menu { display: inline-grid; place-items: center; width: 39px; height: 39px; cursor: pointer; border: 1px solid var(--line); border-radius: 9px; background: #fff; }
+      .open { padding: 8px 10px; }
+      .footer { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <main class="shell">
+      <aside class="sidebar" aria-label="文章导航">
+        <header class="brand">
+          <p class="eyebrow">Chinese translations</p>
+          <h1>LLM 推理博客中文站</h1>
+          <p class="subtitle">vLLM 与 SGLang 博客中文翻译，保留本地图片和原生交互图。</p>
+        </header>
+        <div class="controls">
+          <input class="search" id="search" type="search" placeholder="搜索文章标题…" aria-label="搜索文章">
+          <div class="filters" role="group" aria-label="按来源筛选">
+            <button class="filter active" data-source="all">全部</button>
+            <button class="filter" data-source="vLLM">vLLM</button>
+            <button class="filter" data-source="SGLang">SGLang</button>
+          </div>
+        </div>
+        <nav class="article-list" id="article-list"></nav>
+      </aside>
+
+      <section class="viewer">
+        <header class="toolbar">
+          <button class="menu" id="menu" type="button" aria-label="打开文章列表">☰</button>
+          <div class="current">
+            <div class="current-title" id="current-title">正在加载…</div>
+            <div class="current-meta" id="current-meta"></div>
+          </div>
+          <a class="open" id="open" href="#" target="_blank" rel="noopener">单独打开 ↗</a>
+        </header>
+        <iframe id="viewer" title="中文文章内容"></iframe>
+        <footer class="footer">译文用于技术学习与交流 · <a href="https://github.com/yitingw1/vllm_blog_cn">查看 GitHub 仓库</a></footer>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const articles = [
+      { source: 'vLLM', date: '2026-10-29', title: 'vLLM 首日支持 Mistral Large 4', path: '2026-10-29-mistral-large-4-zh.html' },
+      { source: 'vLLM', date: '2026-10-23', title: 'vLLM 首日支持 MiniMax-M3.1-Flash', path: '2026-10-23-minimax-m31-flash-zh.html' },
+      { source: 'vLLM', date: '2026-10-23', title: 'GLM-5.3 优化（二）：在 16 张 H200 上结合 PCP、DCP 与混合 HiSparse', path: '2026-10-23-glm53-part2-pcp-dcp-hisparse-zh.html' },
+      { source: 'vLLM', date: '2026-10-23', title: '大规模服务 DeepSeek-V4.1-Flash：vLLM 匹配 DeepInfer 并扩展至 GB300 NVL72', path: '2026-10-23-deepseek-v41-flash-pd-wide-ep-zh.html' },
+      { source: 'vLLM', date: '2026-10-16', title: '在 AMD Instinct MI355X 上扩展 Kimi K3', path: '2026-10-16-kimi-k3-mi355x-zh.html' },
+      { source: 'vLLM', date: '2026-10-07', title: 'vLLM 上的 DeepSeek-V4.1-Flash：智能体吞吐量提升 5 倍', path: '2026-10-07-deepseek-v41-flash-zh.html' },
+      { source: 'vLLM', date: '2026-09-08', title: 'GLM-5.3 优化（一）：混合 HiSparse 卸载', path: '2026-09-08-glm53-part1-hybrid-sparse-offloading-zh.html' },
+      { source: 'SGLang', date: '2026-10-22', title: 'SGLang 与 Miles 首日支持 MiniMax M3.1 Flash', path: 'sglang_blog_cn/2026-10-22-minimax-m3.1-flash-day0-support-zh.html' },
+      { source: 'SGLang', date: '2026-10-22', title: 'SGLang 统一内存：保留 1.9 倍前缀，回访请求耗时降低 37.9%', path: 'sglang_blog_cn/2026-10-22-unified-memory-zh.html' },
+      { source: 'SGLang', date: '2026-10-20', title: '使用 SGLang Omni 构建全双工交互智能统一运行时', path: 'sglang_blog_cn/2026-10-20-omni-interactive-runtime-zh.html' },
+      { source: 'SGLang', date: '2026-10-19', title: 'SGLang HiCache：混合模型缓存将输入吞吐量提升至 15.5 倍', path: 'sglang_blog_cn/2026-10-19-hicache-zh.html' },
+      { source: 'SGLang', date: '2026-10-14', title: 'Step 5 Preview：SGLang 与 Miles 首日支持推理和强化学习', path: 'sglang_blog_cn/2026-10-14-step-5-preview-day0-support-zh.html' },
+      { source: 'SGLang', date: '2026-10-13', title: 'SGLang-Omni：通过异构阶段调度服务多阶段全模态模型', path: 'sglang_blog_cn/2026-10-13-spg-topology-zh.html' },
+      { source: 'SGLang', date: '2026-09-23', title: 'SGLang 统一 Radix Cache：用一棵树实现混合模型前缀缓存', path: 'sglang_blog_cn/2026-09-23-unified-radix-cache-zh.html' },
+      { source: 'SGLang', date: '2026-09-20', title: 'RLinf × SGLang：从微调到高效并行评测，完整集成 Cosmos3', path: 'sglang_blog_cn/2026-09-20-rlinf-sglang-cosmos3-zh.html' },
+      { source: 'SGLang', date: '2026-09-10', title: 'SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s', path: 'sglang_blog_cn/2026-09-10-deepseek-v4.1-flash-kernel-optimization-zh.html' },
+      { source: 'SGLang', date: '2026-09-09', title: 'SGLang 与 Miles 首日支持 DeepSeek-V4.1', path: 'sglang_blog_cn/2026-09-09-deepseek-v4.1-day0-support-zh.html' },
+      { source: 'SGLang', date: '2026-08-27', title: 'SGLang 的 Breakable CUDA Graph：图构建提速 5 倍', path: 'sglang_blog_cn/2026-08-27-breakable-cuda-graph-zh.html' },
+      { source: 'SGLang', date: '2026-08-19', title: 'Kimi K3：架构解析与 SGLang 首日支持', path: 'sglang_blog_cn/2026-08-19-kimi-k3-day0-support-zh.html' }
+    ];
+
+    const list = document.querySelector('#article-list');
+    const search = document.querySelector('#search');
+    const viewer = document.querySelector('#viewer');
+    const title = document.querySelector('#current-title');
+    const meta = document.querySelector('#current-meta');
+    const open = document.querySelector('#open');
+    let source = 'all';
+    let selected = null;
+
+    function renderList() {
+      const query = search.value.trim().toLowerCase();
+      const filtered = articles.filter(article =>
+        (source === 'all' || article.source === source) &&
+        (!query || `${article.title} ${article.source} ${article.date}`.toLowerCase().includes(query))
+      );
+      list.replaceChildren();
+      if (!filtered.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty';
+        empty.textContent = '没有找到匹配的文章';
+        list.append(empty);
+        return;
+      }
+      for (const article of filtered) {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `article${selected === article.path ? ' active' : ''}`;
+        button.innerHTML = `<span class="article-title"></span><span class="article-meta"><span class="source${article.source === 'SGLang' ? ' sglang' : ''}">${article.source}</span><span>${article.date}</span></span>`;
+        button.querySelector('.article-title').textContent = article.title;
+        button.addEventListener('click', () => selectArticle(article, true));
+        list.append(button);
+      }
+    }
+
+    function selectArticle(article, updateHistory) {
+      selected = article.path;
+      title.textContent = article.title;
+      meta.textContent = `${article.source} · ${article.date}`;
+      viewer.src = article.path;
+      open.href = article.path;
+      document.title = `${article.title} · LLM 推理博客中文站`;
+      if (updateHistory) {
+        const url = new URL(location.href);
+        url.searchParams.set('article', article.path);
+        history.pushState({ article: article.path }, '', url);
+      }
+      renderList();
+      document.body.classList.remove('menu-open');
+    }
+
+    document.querySelectorAll('.filter').forEach(button => {
+      button.addEventListener('click', () => {
+        source = button.dataset.source;
+        document.querySelectorAll('.filter').forEach(item => item.classList.toggle('active', item === button));
+        renderList();
+      });
+    });
+    search.addEventListener('input', renderList);
+    document.querySelector('#menu').addEventListener('click', () => document.body.classList.toggle('menu-open'));
+    document.addEventListener('click', event => {
+      if (document.body.classList.contains('menu-open') && !event.target.closest('.sidebar') && !event.target.closest('#menu')) {
+        document.body.classList.remove('menu-open');
+      }
+    });
+    window.addEventListener('popstate', () => {
+      const requested = new URL(location.href).searchParams.get('article');
+      selectArticle(articles.find(article => article.path === requested) || articles[0], false);
+    });
+
+    const requested = new URL(location.href).searchParams.get('article');
+    selectArticle(articles.find(article => article.path === requested) || articles[0], false);
+  </script>
+</body>
+</html>
