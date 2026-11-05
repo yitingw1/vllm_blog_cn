@@ -4,6 +4,7 @@ SGLang 官方博客的中文翻译与本地交互版本。
 
 ## 文章
 
+- [Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习](2026-11-04-kimi-k3.1-pro-day0-support-zh.html)（[英文原文](https://www.sglang.io/blog/kimi-k3.1-pro-day0-support)）
 - [SGLang 与 Miles 首日支持 MiniMax M3.1 Flash](2026-10-22-minimax-m3.1-flash-day0-support-zh.html)（[英文原文](https://www.sglang.io/blog/minimax-m3.1-flash-day0-support)）
 - [SGLang 统一内存：保留 1.9 倍前缀，回访请求耗时降低 37.9%](2026-10-22-unified-memory-zh.html)（[英文原文](https://www.sglang.io/blog/unified-memory)）
 - [使用 SGLang Omni 构建全双工交互智能统一运行时](2026-10-20-omni-interactive-runtime-zh.html)（[英文原文](https://www.sglang.io/blog/omni-interactive-runtime)）

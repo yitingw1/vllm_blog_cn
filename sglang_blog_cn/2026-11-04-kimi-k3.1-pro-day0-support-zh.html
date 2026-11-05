@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习">
+  <title>Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习</h1>
+        <p class="original-title">Kimi K3.1 Pro: Day-0 Inference and RL Support with SGLang and Miles</p>
+        <div class="meta">
+          <span>作者：SGLang 与 Miles 团队</span>
+          <span>发布日期：2026-11-04</span>
+          <a href="https://www.sglang.io/blog/kimi-k3.1-pro-day0-support">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习</h1>
+<p><strong>SGLang 与 Miles 从发布首日即支持 <a href="https://huggingface.co/moonshotai/Kimi-K3.1-Pro">Kimi K3.1 Pro</a> 的推理与强化学习（RL）。</strong> Kimi K3.1 Pro 是 Moonshot AI 基于 Kimi K3、通过大规模 RL 后训练得到的开放权重原生多模态智能体模型。SGLang 从首日起即可在 NVIDIA、AMD、Google TPU、AWS Trainium 和真武 PPU 上提供服务。</p>
+<h2>快速开始</h2>
+<p>各平台和服务配置的启动命令，请参阅 <a href="https://docs.sglang.io/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro">Kimi K3.1 Pro SGLang Cookbook</a>。</p>
+<h2>模型概览</h2>
+<p><strong>2.8 万亿</strong>总参数 · 每 token 激活 <strong>1040 亿</strong>参数 · <strong>100 万 token</strong> 上下文 · 支持文本和图像输入</p>
+<p>Kimi K3.1 Pro 延续 Kimi K3 架构。模型共有 93 层，包括 69 个 KDA（Kimi Delta Attention）线性注意力层，以及 24 个读取完整历史的注意力层。每个 MoE 层会为每个 token 从 896 个专家中路由 16 个专家，并额外使用 2 个共享专家。</p>
+<h3>Kimi K3.1 Pro 的新变化</h3>
+<ul>
+<li><strong>稀疏注意力。</strong> 24 个全历史层升级为 Gated Sparse-MLA（DSA）层。每层中，小型索引器会为所有历史 token 打分，注意力只读取得分最高的 2,048 个 token，因此长上下文所需的注意力计算大幅减少。</li>
+</ul>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-attention-CjTw4EuQ.png" alt="Kimi K3.1 Pro 架构：69 个 KDA 层和 24 个 Gated Sparse-MLA（DSA）层"></p>
+<p><strong>图 1：混合注意力。</strong> KDA 层为每个请求维护固定大小的状态；在每个 DSA 层中，索引器为历史 token 打分，注意力读取排名最高的 2,048 个 token。</p>
+<h2>SGLang 首日支持</h2>
+<h3>AgentX 性能</h3>
+<p>我们在 NVIDIA GB300 NVL72 上用 SGLang 运行 Kimi K3.1 Pro（MXFP4），并在 <a href="https://inferencex.semianalysis.com/agentx">AgentX</a> 上测试了 1～300 个并发会话，使用三类部署布局：</p>
+<ul>
+<li><strong>1～4 个会话：使用 MegaKernel 的聚合式服务器。</strong> 单会话使用 16 张 GPU 上的 TP16，或使用 8 张 GPU 上的 TP8。</li>
+<li><strong>24～56 个会话：使用 Dynamo 的预填充/解码分离，24 张 GPU 上运行 1P2D。</strong> 一个预填充 worker 加两个解码 worker，每个均采用 TP8、DCP8 和 EP2。</li>
+<li><strong>160～300 个会话：32 或 40 张 GPU 上运行 2P1D 或 3P1D。</strong> 两到三个 TP8 · DCP8 · EP2 预填充 worker，为一个 wide-EP16 解码服务器供给请求；后者使用 TP16、attention DP2、DCP8 和 MegaMoE EP16。</li>
+</ul>
+<p>DFlash2 在 24～56 个会话、块大小为 7 时的平均接受长度为 3.764；在 160～300 个会话、块大小为 5 时为 3.508。</p>
+<p>吞吐量从单会话时每 GPU 1,563 token/s 提升到 300 会话时的 33,688 token/s，而单用户速度则从 449.0 token/s 变化到 69.8 token/s。</p>
+<p>分离式部署的启动命令位于 <a href="https://docs.sglang.io/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro#agentic-long-context-deployment">Kimi K3.1 Pro Cookbook</a>。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-agentx-DAvamTIV.png" alt="SGLang 在 NVIDIA GB300 NVL72 上的 AgentX 性能"></p>
+<p><strong>图 2：NVIDIA GB300 NVL72 上的 AgentX。</strong> 每个点代表一种部署，并标注其并发度和并行布局。分离式服务提供最高的每 GPU 吞吐量；聚合式 TP8 和 TP16 服务则提供最快的单用户速度，在并发度 1 时最高达到 449 token/s。</p>
+<h3>多硬件平台支持</h3>
+<p>首日支持覆盖 NVIDIA Blackwell、NVIDIA Vera Rubin NVL72、NVIDIA Hopper、AMD Instinct MI350X/MI355X、Google TPU7x、AWS Trainium 2/3，以及真武 PPU M890/810E。当前首日配方使用预览镜像，尚未进入 SGLang 正式发行版；启动方式请参阅 <a href="https://docs.sglang.io/cookbook/autoregressive/Moonshotai/Kimi-K3.1-Pro">Kimi K3.1 Pro Cookbook</a>。</p>
+<p><strong>AMD Instinct MI350X 和 MI355X。</strong> 从首日起，一台配备 8 张 MI350X 或 MI355X 的节点即可使用 TP8、DCP8 和 DFlash2 服务 Kimi K3.1 Pro；两台节点可通过 Mooncake 运行 1P1D 预填充/解码分离。新的 gfx950 内核覆盖整个混合模型：KDA 验证使用一个 HIP 内核；DSA 使用合并 DCP 分片的 HIP top-k、HIP sparse MLA 预填充内核，以及从 AITER opus decode 移植的 MXFP8 sparse MLA 解码内核；MoE 使用 A8W4 grouped GEMM。低并发时，<a href="https://github.com/sgl-project/sgl-amd-mono">sgl-amd-mono</a> 的 MegaKernel 以持久化内核运行解码和验证。</p>
+<p><strong>Google TPU。</strong> 通过 <a href="https://github.com/sgl-project/sglang-torchtpu">SGLang-TorchTPU</a>，Kimi K3.1 Pro 可在一个由 16 颗 TPU7x（Ironwood）组成的 slice 上作为 TP32 · EP8 引擎运行。8K 输入的单请求解码速度约为 133 token/s；使用实验性 MegaKernel 和 DFlash 时最高约为 590 token/s。</p>
+<p><strong>AWS Trainium。</strong> SGLang 首次为 AWS Trainium 带来开放权重模型的首日支持。Kimi K3.1 Pro 通过 <a href="https://www.lmsys.org/blog/2026-10-22-sglang-trainium-beta">SGLang Trainium 插件</a>运行在 Trainium 2/3 上；该插件基于 AWS 面向 Trainium 的原生 PyTorch 后端 TorchNeuron。插件目前处于有限测试阶段，待广泛开放后将发布 Kimi K3.1 Pro 的 Trainium 配方。如需申请访问权限，可填写<a href="https://docs.google.com/forms/u/1/d/e/1FAIpQLSf-YWVXi6vA-rLBSqsovDFbn_KJtVi1dUlsRMXkiwvcVFsjWA/viewform">此表单</a>。</p>
+<p><strong>真武 PPU。</strong> Kimi K3.1 Pro 是真武 PPU 作为 SGLang 树内硬件后端首次获得首日模型支持。M890 和 810E 都支持预填充/解码分离：M890 使用 2P1D，预填充为 TP16/EP16，解码为 TP32/EP32/DP4；810E 使用 1P1D，预填充为 TP16/PP4，解码为 TP32/EP32。</p>
+<h3>使用 MegaKernel 实现超低延迟</h3>
+<p>为实现低延迟服务，SGLang 将 Kimi K3.1 Pro 的每个解码和验证步骤运行为与 NVIDIA 联合开发的 MegaKernel。在一个步骤内，前一个内核尚未完全结束时，下一个内核就会启动；GPU 通过 NVLink 交换部分结果并在设备端相互发出信号；all-reduce 被融合进相邻计算内核，因此 GPU 可以逐层推进，无需等待主机。MegaKernel 通过 <code>sgl-nvidia-mega</code> 插件支持 NVIDIA GB300 NVL72 和 NVIDIA Vera Rubin NVL72。使用 <code>--enable-nvidia-megakernel</code> 启动服务器；在 GB300 NVL72 上还可设置 <code>SGLANG_ENABLE_NV_MEGA_RUNTIME_K31_GB_OPTIMIZATION=1</code> 以应用 SGLang 的调优参数。</p>
+<p>MegaKernel 覆盖整个步骤：</p>
+<ul>
+<li><strong>稀疏注意力（DSA）：</strong> 对验证块中的每个 token 执行索引器、top-2,048 选择和 sparse MLA 注意力。对于长历史，索引器工作分散到各 GPU，并精确合并选择结果。</li>
+<li><strong>KDA：</strong> 处理验证块的线性注意力层，并更新已接受 token 的状态。</li>
+<li><strong>MoE：</strong> 包含路由器、16 个路由 MXFP4 专家和共享专家，并将跨 GPU 归约融合到专家内核中。</li>
+<li><strong>层边界：</strong> 注意力输出投影及其 all-reduce、AttnRes 混合均融合到相邻内核。</li>
+<li><strong>DFlash2：</strong> 草稿模型从各层到草稿头也作为 MegaKernel 运行；目标模型在自身 MegaKernel 内接受草稿 token，包括采样模式下的接受判断。</li>
+</ul>
+<p>在 NVIDIA GB300 NVL72 上，单个 AgentX 会话使用 16 张 GPU 的 TP16 时，P90 单用户解码速度为 449.0 token/s；使用 8 张 GPU 的 TP8 时为 354.7 token/s。</p>
+<p>在 NVIDIA Vera Rubin NVL72 上，单个 AgentX 会话使用 16 张 GPU 的 TP16 时，P90 单用户解码速度为 741.8 token/s。</p>
+<h3>DFlash2 推测解码</h3>
+<p>SGLang 使用 <a href="https://lmsys.org/blog/2026-06-15-next-generation-speculative-decoding-dflash-v2/">DFlash2</a> 为 Kimi K3.1 Pro 执行推测解码。小型草稿模型读取 Kimi K3.1 Pro 六个层的隐藏状态，在一次前向传播中提出 7 个 token，随后 Kimi K3.1 Pro 在一次前向传播中检查全部 7 个 token。<a href="https://huggingface.co/RadixArk/Kimi-K3.1-Dflash2-Preview">RadixArk 训练的草稿模型</a>包含五个 MLA 层，滑动窗口为 1,024 token。</p>
+<h3>并行设计</h3>
+<h4>预填充：流水线并行与预填充上下文并行结合</h4>
+<p>为了在真实服务中更好地满足首 token 时间（TTFT）要求，我们将流水线并行（PP）与预填充上下文并行（PCP）结合起来。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-pp4-pcp2-pipeline-CIudM2gC.gif" alt="PP4 与 PCP2 预填充流水线"></p>
+<p><strong>图 3：PP4 × PCP2 预填充。</strong> 每个流水线阶段使用两个 PCP rank 处理同一微批次的 token 分片；不同阶段并发处理不同微批次，最后一个阶段还承载草稿模型。</p>
+<p>**流水线并行（PP）**通过将模型层及其 DSA KV 缓存拆分到多个阶段来提高预填充并发度。每个阶段只存储本阶段各层的 KV，从而为更多并发请求留出内存。我们采用<a href="https://www.lmsys.org/blog/2026-07-27-kimi-k3-day0-support#prefill-chunked-pipeline-parallelism">为 Kimi K3 引入的分块流水线方法</a>：提示块形成微批次并依次通过各阶段。一个阶段处理某个微批次时，前一阶段会开始处理下一个微批次，以重叠方式缩短整串微批次的处理时间。</p>
+<p>**预填充上下文并行（PCP）**以轮询方式将 token 位置交错分布到不同 rank，让每个 rank 持有序列的一个分片。KDA 会收集完整数据块，在各 rank 间拆分注意力头，再把输出归约回 token 分片。DSA 保持 query 在本地，同时收集新的 key 和 KV，以访问完整历史。AttnRes 在本地分片上工作，MegaMoE 则通过 AllToAll 将 token 路由到专家并返回结果。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-pcp-overview-Dpv8bifQ.png" alt="PCP2 下不断变化的 token 布局"></p>
+<p><strong>图 4：PP 阶段内的 token 布局。</strong> KDA 在不同 rank 间拆分注意力头并收集完整序列；AttnRes 在本地 token 分片上工作；每个注意力层之后，MegaMoE 将专家结果返回这些分片。</p>
+<p>PP 和 PCP 都可与 <a href="https://www.lmsys.org/blog/2026-11-02-hicache-distributed-serving">HiCache</a> 配合使用，后者将可复用前缀保存在主机内存和外部存储中。当前 PCP 会拆分计算，但 DSA KV 在 CP 组内仍会复制。后续计划为 PCP 增加 KV 缓存分片，消除 CP rank 间的重复 KV 存储。</p>
+<p>预填充 worker 也支持<strong>解码上下文并行（DCP）</strong>，它更适合 AgentX 一类工作负载：请求经常在很长的缓存历史后仅追加少量新文本，而且并不只关注 TTFT。每个 DSA 层中，启用 DCP 的预填充 worker 会通过 AllGather 重建该批次的完整 KV 缓存历史，再调用注意力内核。由于 DSA 层少于 KDA 层，这项通信开销在现代 NVLink 系统上可以接受。</p>
+<h4>解码：结合 DSA 与解码上下文并行</h4>
+<p>使用 DSA 后，每个 query 只查看先前得分最高的 2,048 个 token，但 KV 缓存和索引缓存仍会随上下文长度增长。我们的 DCP 实现以相同方式在 GPU 间拆分两类缓存：token <em>p</em> 存储在编号为 <em>p</em> mod 8 的 GPU 上，因此每张 GPU 只持有各缓存的八分之一。</p>
+<p>由于索引缓存被分片，每张 GPU 的索引器只能为本地 token 打分，随后选择本地 top 2,048。此步骤不会丢失任何 token：全局 top 2,048 中的每个 token，也必然位于其所属 GPU 的本地 top 2,048 中。为低成本完成合并，每张 GPU 仅通过一次 NVLink multicast write，把最优的 384 个候选发送给其他 GPU。此时每张 GPU 都拥有相同的 8 × 384 个候选，并以其中第 2,048 高的分数作为阈值。如果某张 GPU 的第 384 个候选低于阈值，则它不可能隐藏其他胜出者；如果它的 384 个候选全都高于阈值，则可能仍有遗漏，因此所有 GPU 会通过 NVLink 直接读取它完整的本地 top 2,048，再执行一次选择。最终结果与单 GPU top-k 完全一致，无需新一轮通信。之后，每张 GPU 只关注由自己持有的胜出 token，再合并局部输出。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-dcp-dsa-DJK2ierR.png" alt="DSA 的解码上下文并行"></p>
+<p><strong>图 5：玩具示例中的 DSA DCP。</strong> 两类缓存都按 token 分片。每张 GPU 只共享最优候选；如果某张 GPU 可能仍持有更多胜出者，则读取其完整列表，因此合并后的 top-k 与单 GPU top-k 一致。</p>
+<h2>Miles 首日支持</h2>
+<p><a href="https://github.com/radixark/miles">Miles</a> 从发布首日起即可在 32 张 H200 组成的小型集群上对 Kimi K3.1 Pro 进行强化学习训练。</p>
+<p><strong>训练配方。</strong> 与 Kimi K3 相同，Miles 在冻结的 MXFP4 基础模型上训练 BF16 LoRA 适配器。无论在训练器还是 SGLang 中，适配器都作为独立的 BF16 项存在，绝不会合并进基础模型。</p>
+<p><strong>训练并行。</strong></p>
+<ul>
+<li>训练器结合 PP、TP、CP 和 EP。</li>
+<li>CP 也覆盖新的 DSA 层：每张 GPU 保留自己的 query，并从 CP 组中收集 latent KV 和索引器 key。</li>
+</ul>
+<p><strong>用于 LoRA rollout 的 DP attention。</strong> 使用 TP32 attention 时，每张 GPU 为所有运行中请求处理一部分注意力头。MLA 为每个 token 只保留一份压缩 KV，而不是每个头一份，因此张量并行无法拆分它：32 张 GPU 都会存储相同的 MLA KV 和索引器 key，并且每个注意力层结束时都要跨四个节点执行 all-reduce。使用 DP attention 后，32 张 GPU 组成四个 8-GPU 组，每组对应一个节点，并只为自身四分之一的请求执行注意力；MoE 层仍横跨全部 32 张 GPU。这带来两个变化：</p>
+<ul>
+<li><strong>更少的重复 KV。</strong> 每张 GPU 存储 64 个请求的 KV，而不是 256 个。总 token 数同为 589,824 时，每 GPU KV 缓存占用从 16.9 GiB 降至 4.2 GiB。</li>
+<li><strong>更少的跨节点流量。</strong> 注意力 all-reduce 留在单个节点的 NVLink 内，只有 MoE 层仍需跨节点交换 token。</li>
+</ul>
+<p>在 32 张 H200、256 个运行请求下，一个解码步骤耗时 166.6 ms，而 TP32 attention 为 202.6 ms。运行请求为 64 时，DP attention 反而更慢（136 ms 对 110.5 ms），因此只有 rollout 能持续填满引擎时才更划算。</p>
+<p>为了支持 LoRA，SGLang 现在允许 DP attention 下的 attention TP 大于 1。LoRA 层必须知道输入行属于本组请求，还是已经收集了所有组的请求。在 Kimi K3.1 Pro 中，注意力投影看到本组的行，而稠密层、共享专家和路由专家会看到全部行。模型会声明这种布局，因此 SGLang 不再要求 attention TP 必须为 1。</p>
+<p><strong>一致性。</strong> Rollout 路由重放会让训练器为每个 token 使用 SGLang 选择的专家。在 DP attention 下，一个组内的 GPU 共享同一份索引器选择，因此读取相同的 2,048 个 token。每一步都会在相同策略版本下记录训练/rollout KL。</p>
+<p><strong>验证运行。</strong> 训练使用 DAPO-Math-17k 提示；每步包含 32 个提示，每个提示采样 16 次；LoRA 秩为 32，学习率为 1e-5。任务要求模型在固定的 3,072-token 预算内完成推理并给出答案。</p>
+<table>
+<thead>
+<tr>
+<th>配置</th>
+<th>32× H200</th>
+<th>16× NVIDIA Blackwell Ultra</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>训练器</td>
+<td>PP4 × TP4 × CP2，EP8</td>
+<td>PP2 × TP4 × CP2，EP8</td>
+</tr>
+<tr>
+<td>Rollout</td>
+<td>MoE EP32，attention DP4 × TP8</td>
+<td>MoE EP16，attention DP2 × TP8</td>
+</tr>
+<tr>
+<td>训练/rollout KL</td>
+<td>0.44～0.82 × 10⁻³</td>
+<td>0.36～0.42 × 10⁻³</td>
+</tr>
+</tbody></table>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-rl-training-hTe8MgWp.png" alt="训练曲线"></p>
+<p><strong>图 6：训练曲线。</strong> 奖励从最初 10 步的 0.63 上升到最后 10 步的 0.77；训练/rollout KL、log-prob 差值和梯度范数均保持平稳。</p>
+<p>我们采用训练时相同的预算、提示模板和奖励进行评测，温度设为 1.0：每道 AIME 题采样 16 次，每道 MATH-500 题采样 4 次。训练 84 步后，AIME 2024 准确率从 44.6 提升到 70.0。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-rl-eval-DsWdtK6n.png" alt="RL 前后的评测结果"></p>
+<p><strong>图 7：RL 前后的准确率。</strong> 展示基础模型以及训练 39 步和 84 步后的适配器，在多次采样上的平均准确率。</p>
+<p><strong>Blackwell。</strong> 同一配方也可在 16 张 NVIDIA Blackwell Ultra GPU 上运行，GPU 数量只有 H200 实验的一半，并使用上表所示布局。一次包含 4,096-token 响应的 15 步运行验证了 Blackwell 上训练与 rollout 始终保持一致，更多实验仍在进行中。</p>
+<p><img src="assets/2026-11-04-kimi-k3.1-pro-day0-support/k31-rl-training-b300-C0_AKaY2.png" alt="16 张 NVIDIA Blackwell Ultra 上的训练曲线"></p>
+<p><strong>图 8：16 张 NVIDIA Blackwell Ultra 上的训练曲线。</strong> 全部 15 步中，训练/rollout KL 和 log-prob 差值均保持平稳；此次运行太短，尚不足以展示奖励趋势。</p>
+<h2>致谢</h2>
+<p>Kimi K3.1 Pro 首日支持由 SGLang 与 Miles 团队、Moonshot AI 团队共同完成，并得到了 AMD（Zijie Chen、Wun-guo Huang、Xinyi Song、Zhaoyi Li、Hai Xiao，以及 Berkeley SkyDiscover 的 SkyOpt agents）、AWS 和真武 PPU 的参与。我们也感谢 NVIDIA 提供的支持。</p>
+<blockquote>
+<p>本文由 Codex 根据 SGLang 官方英文原文翻译。</p>
+</blockquote>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

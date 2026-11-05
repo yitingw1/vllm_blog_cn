@@ -8,6 +8,8 @@ SGLang 官方博客的中文翻译单独保存在 [`sglang_blog_cn/`](sglang_blo
 
 ## 文章
 
+- [Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面](2026-11-04-introducing-kinference-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-04-introducing-kinference)）
+- [vLLM 首日支持 Kimi K3.1 Pro](2026-11-04-kimi-k31-pro-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-04-kimi-k31-pro)）
 - [GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载](2026-09-08-glm53-part1-hybrid-sparse-offloading-zh.html)（[英文原文](https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading)）
 - [vLLM 上的 DeepSeek-V4.1-Flash：首日发布后智能体吞吐量提升 5 倍](2026-10-07-deepseek-v41-flash-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-07-deepseek-v41-flash)）
 - [在 AMD Instinct MI355X 上扩展 Kimi K3：AgentX 单 GPU 吞吐量匹敌 NVIDIA HGX B300](2026-10-16-kimi-k3-mi355x-zh.html)（[英文原文](https://vllm.ai/blog/2026-10-16-kimi-k3-mi355x)）

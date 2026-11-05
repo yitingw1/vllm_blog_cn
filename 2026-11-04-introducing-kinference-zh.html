@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面">
+  <title>Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面</h1>
+        <p class="original-title">Introducing Kinference: An Open Source Inference Control Plane for vLLM and Kubernetes</p>
+        <div class="meta">
+          <span>作者：Kinference 团队</span>
+          <span>发布日期：2026-11-04</span>
+          <a href="https://vllm.ai/blog/2026-11-04-introducing-kinference">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面</h1>
+<p>我们很高兴宣布推出 <a href="https://kinference.ai/">Kinference（读作 kay-inference）</a>——一个使用 vLLM 构建可扩展推理平台的新开源项目。</p>
+<p><img src="assets/2026-11-04-introducing-kinference/by-buoyant-black.svg" alt="Buoyant 推出的 Kinference"></p>
+<p>我们在 <a href="https://buoyant.io/">Buoyant</a> 创建 Kinference，是因为看到许多客户难以在自己的环境中运行开放权重模型。Kinference 被设计为推理平台的控制平面层：底层推理由 vLLM 执行，它则提供实际构建推理平台所需的一整套能力，包括 token 速率限制、租户用量与成本跟踪、智能负载均衡以及推理策略。</p>
+<p><img src="assets/2026-11-04-introducing-kinference/image2.webp" alt="Kinference 架构"></p>
+<p>Kinference 可以与现有技术栈配合使用。接入方式很简单：让推理客户端指向它的 HTTP 端点，并向该端点发送兼容 OpenAI 或 Anthropic 的推理流量。</p>
+<p>Kinference 面向不断演进且彼此异构的客户端，为运行在同样不断演进、异构 GPU 池上的各种模型提供服务。</p>
+<h2>推理负载均衡与性能</h2>
+<p>除策略和路由层外，Kinference 还提供推理专用负载均衡。它会考虑 GPU 队列长度、历史性能以及 GPU 中 KV 缓存的内容等信号。尤其是 KV 缓存感知能力，使 Kinference 能将请求发送给处理该请求所需工作量最少的 vLLM worker。</p>
+<p>对 GPU KV 缓存内容建模可以显著提升分布式推理性能。例如，在我们的<a href="https://buoyant.io/blog/distributed-inference-benchmarks-kinference-vs-plain-kubernetes">公开 Kinference 基准测试</a>中，与标准 Kubernetes 负载均衡（下图标记为“service”）相比，在一种工作负载上，<strong>Kinference（标记为“kinference”）将请求的首 token 时间（TTFT）中位数降低了 95%，端到端延迟中位数降低了 45%</strong>。</p>
+<p><img src="assets/2026-11-04-introducing-kinference/image3.webp" alt="轻负载下的首 token 时间"></p>
+<p>将缓存感知纳入策略后，平台所有者可以把简单请求发送给成本更低的模型，但前提是这样做确实比直接发送给昂贵模型所需的工作量更少。</p>
+<p>上面的<em>无负载延迟</em>测试旨在单独测量 Kinference KV 缓存感知负载均衡的效果。下面的<em>容量</em>测试则测量各端点在满足延迟服务等级目标（SLO）时每分钟能够处理的请求数。</p>
+<p><img src="assets/2026-11-04-introducing-kinference/image4.webp" alt="不同并发度下的有效吞吐量"></p>
+<p>在容量测试中，Kinference 在共享前缀工作负载上的有效吞吐量达到 <strong>7.4 倍</strong>，在多轮对话工作负载上约为 <strong>3.5 倍</strong>。对于共享前缀工作负载，它在并发度 32（测试的最高并发度）时仍能达到选定的 SLO；对于多轮工作负载，则可在并发度 8 时达到 SLO。相比之下，kube-proxy 方案在任何测试并发度下都无法达到该 SLO。</p>
+<p>基准测试环境、过程和完整结论可参阅<a href="https://buoyant.io/blog/distributed-inference-benchmarks-kinference-vs-plain-kubernetes">这篇文章</a>。</p>
+<h2>策略驱动的方法</h2>
+<p>Kinference 的核心概念是<em>推理策略（inference policy）</em>。</p>
+<p>推理策略帮助平台所有者在用量、性能和优先级之间作出权衡。我们看到客户经常需要解决以下问题：</p>
+<ul>
+<li>如何让用户不仅能够请求特定模型检查点，例如“Qwen 3.8、270 亿参数、FP8 量化”，还能请求更宽泛的模型类别，例如“任意 Qwen 3.8 模型”或“适合编程的模型”？</li>
+<li>如何把“简单”推理请求重定向到更便宜的模型，即使用户指定了昂贵模型？又如何避免把整段提示历史发送到一张冷 GPU，从而产生巨大的延迟开销？</li>
+</ul>
+<p>我们没有为每种情况分别构建一次性功能，而是在 Kinference 中构建了一个能够表达这些需求以及更多需求的策略层。</p>
+<p>例如，下面的 YAML 策略会按复杂度对提示进行语义分类，并把简单提示路由到更便宜的模型；但如果考虑缓存使用情况后，昂贵模型反而能更快完成请求，则会选择昂贵模型。</p>
+<pre><code class="language-yaml">apiVersion: kinference.buoyant.io/v1alpha1
+kind: InferencePolicy
+metadata:
+  name: smart-semantic-routing
+  namespace: inference
+spec:
+  rules:
+  - name: low-complexity-consider-qwen
+    matches:
+    - model: glm-5.3
+      tag: complexity-low
+    route:
+      consider:
+      - models: { names: [ qwen-3.6-27b, glm-5.3 ] }
+      select: [ { minimize: PredictedTTFT } ]
+</code></pre>
+<p>下面的示例会在队列深度或缓存压力表明本地 GPU 已饱和时，将超出的请求突发转移到云服务提供商的端点，例如 OpenAI、Anthropic 或 Databricks。</p>
+<pre><code class="language-yaml">apiVersion: kinference.buoyant.io/v1alpha1
+kind: InferencePolicy
+metadata:
+  name: burst-policy
+  namespace: inference
+spec:
+  rules:
+  - name: burst-to-cloud
+    route:
+      exclude:
+      - name: drop-overloaded-workers
+        drop:
+          backend:       { type: Local }
+          queuedPrompts: { greaterThan: 2 }
+
+      select:
+      - { type: Local,
+          minimize: PredictedTTFT }
+      - { type: Provider,
+          order: [bedrock, databricks] }
+</code></pre>
+<p>最后一个示例会根据提示是否包含个人身份信息（PII）进行语义分类；当 GPU 池饱和时，仅把不含 PII 的请求突发转移到第三方提供商。</p>
+<pre><code class="language-yaml">apiVersion: kinference.buoyant.io/v1alpha1
+kind: InferencePolicy
+metadata:
+  name: pii-stays-local
+  namespace: inference
+spec:
+  rules:
+  - name: serve
+    route:
+      exclude:
+      - name: pii-never-leaves-cluster
+        if:   { tag: pii-detected }
+        drop: { backend: { type: Provider } }
+      select:
+      - { type: Provider,
+          order: [ databricks ] }
+      - { type: Local,
+          minimize: PredictedTTFT }
+      onEmpty: Reject   # 无匹配时默认拒绝
+</code></pre>
+<p>借助推理策略，平台所有者可以基于租户、请求的模型、底层 GPU 池状态、提示的语义分类以及其他因素，为推理请求的路由或拒绝方式制定明确规则。这些策略可以经过人工或智能体审查，可以提交到 Git，可以进行 lint 和合规检查，也可以独立应用或回滚。</p>
+<p>我们认为，要构建真正的推理平台，这样的策略引擎不可或缺。详情请参阅 <a href="http://kinference.ai/docs/">Kinference 策略文档</a>。</p>
+<h2>推理指标与 SLO</h2>
+<p>Kinference 还提供一套全面的推理指标，供平台所有者监控、告警并围绕它们建立 SLO。除了自身健康状况外，Kinference 还会报告：</p>
+<ul>
+<li>输入和输出 token 速率，以及输入、输出 token 数量的直方图；</li>
+<li>TTFT、token 间延迟（ITL）和端到端（E2E）延迟直方图；</li>
+<li>未缓存和已缓存的提示 token 数，用于估算成本；</li>
+<li>模型使用情况、GPU 饱和度等。</li>
+</ul>
+<p><img src="assets/2026-11-04-introducing-kinference/image5.webp" alt="Kinference 分租户指标仪表板"></p>
+<p>几乎每项指标都可以按租户查看，因此可以跟踪各租户用量、为特定租户建立性能 SLO，并获得确保平台满足要求所需的其他信息。</p>
+<h2>立即试用</h2>
+<p>开始使用非常简单。</p>
+<h3>01 安装 Gateway API CRD</h3>
+<p>**注意：**本指南将 Kinference 安装到 <code>default</code> 命名空间。若要安装到其他命名空间，请在下面的 Helm 命令中覆盖命名空间设置。</p>
+<p>第一步是安装 <a href="https://gateway-api.sigs.k8s.io/docs/introduction/">Gateway API</a> CRD，它提供处理流量的标准机制。</p>
+<pre><code class="language-bash">GWAPI_VERSION=1.5.1
+kubectl apply --server-side --force-conflicts -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v$GWAPI_VERSION/standard-install.yaml
+</code></pre>
+<h3>02 安装 Kinference 网关</h3>
+<p>Kinference 有两个基本组件：流量网关和推理处理器。二者独立发布，并分别将自己的 CRD 作为单独的 Chart 提供；安装组件前应先安装相应 CRD。</p>
+<p>安装网关 CRD 和组件：</p>
+<pre><code class="language-bash">helm upgrade -i gateway-crds \
+  oci://ghcr.io/buoyantio/charts/gateway-crds \
+  --devel
+
+helm upgrade -i gateway \
+  oci://ghcr.io/buoyantio/charts/gateway \
+  --devel --wait
+</code></pre>
+<h3>03 安装 Kinference</h3>
+<p>接下来安装 Kinference 及其 CRD：</p>
+<pre><code class="language-bash">helm upgrade -i kinference-crds \
+  oci://cr.kinference.ai/kinference-ai/charts/kinference-crds \
+  --devel
+
+helm upgrade -i kinference \
+  oci://cr.kinference.ai/kinference-ai/charts/kinference \
+  --set extension.enabled=true \
+  --devel --wait
+</code></pre>
+<h3>04 确认系统正常运行</h3>
+<pre><code class="language-bash">kubectl get pods
+</code></pre>
+<p>确认各进程正在运行：</p>
+<pre><code class="language-text">NAME                           READY   STATUS    RESTARTS   AGE
+gateway-cp-566cddc46d-jsqlq    1/1     Running   0          8s
+kinference-7bb854cfc5-pp4t7    1/1     Running   0          8s
+</code></pre>
+<p>这些步骤会持续演进，请始终参考 <a href="http://kinference.ai/docs/">Kinference 最新文档</a>。</p>
+<p>Kinference 完全开源，采用 Apache 2.0 许可证，现已发布在 <a href="https://github.com/Kinference-AI/kinference">GitHub</a>。欢迎提供反馈、提交问题，以及分享其他部署环境中的基准测试报告。</p>
+<blockquote>
+<p>本文由 Codex 根据 vLLM 官方英文原文翻译。</p>
+</blockquote>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
