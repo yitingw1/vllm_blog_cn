@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="vLLM 与 SGLang 官方博客中文翻译及原生交互版本">
+  <meta name="description" content="vLLM、SGLang 与 AMD 技术博客中文翻译及原生交互版本">
   <title>LLM 推理博客中文站</title>
   <style>
     :root {
@@ -16,6 +16,7 @@
       --brand: #1467d2;
       --brand-soft: #e8f1ff;
       --sglang: #b94b17;
+      --amd: #c51a4a;
       --shadow: 0 18px 50px rgba(32, 56, 85, .13);
     }
     * { box-sizing: border-box; }
@@ -111,6 +112,7 @@
       font-weight: 700;
     }
     .source.sglang { color: var(--sglang); border-color: #f0c6b3; background: #fff7f2; }
+    .source.amd { color: var(--amd); border-color: #edb6c6; background: #fff4f7; }
     .empty { padding: 28px 12px; color: var(--muted); text-align: center; }
     .viewer { min-width: 0; display: flex; flex-direction: column; background: #fff; }
     .toolbar {
@@ -164,7 +166,7 @@
         <header class="brand">
           <p class="eyebrow">Chinese translations</p>
           <h1>LLM 推理博客中文站</h1>
-          <p class="subtitle">vLLM 与 SGLang 博客中文翻译，保留本地图片和原生交互图。</p>
+          <p class="subtitle">vLLM、SGLang 与 AMD 技术博客中文翻译，保留本地图片和原生交互图。</p>
         </header>
         <div class="controls">
           <input class="search" id="search" type="search" placeholder="搜索文章标题…" aria-label="搜索文章">
@@ -172,6 +174,7 @@
             <button class="filter active" data-source="all">全部</button>
             <button class="filter" data-source="vLLM">vLLM</button>
             <button class="filter" data-source="SGLang">SGLang</button>
+            <button class="filter" data-source="AMD">AMD</button>
           </div>
         </div>
         <nav class="article-list" id="article-list"></nav>
@@ -194,9 +197,11 @@
 
   <script>
     const articles = [
+      { source: 'AMD', date: '2026-11-04', title: 'Kimi K3.1 Pro 登陆 AMD Instinct GPU：首日支持与优化', path: 'amd_blog_cn/2026-11-04-kimi-k3-1-pro-on-amd-instinct-gpus-zh.html' },
       { source: 'vLLM', date: '2026-11-04', title: 'Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面', path: '2026-11-04-introducing-kinference-zh.html' },
       { source: 'vLLM', date: '2026-11-04', title: 'vLLM 首日支持 Kimi K3.1 Pro', path: '2026-11-04-kimi-k31-pro-zh.html' },
       { source: 'SGLang', date: '2026-11-04', title: 'Kimi K3.1 Pro：SGLang 与 Miles 首日支持推理和强化学习', path: 'sglang_blog_cn/2026-11-04-kimi-k3.1-pro-day0-support-zh.html' },
+      { source: 'AMD', date: '2026-11-03', title: '用于 ATOM 高交互式 LLM 服务的 FlyDSL 单体内核', path: 'amd_blog_cn/2026-11-03-flydsl-mono-atom-zh.html' },
       { source: 'vLLM', date: '2026-10-29', title: 'vLLM 首日支持 Mistral Large 4', path: '2026-10-29-mistral-large-4-zh.html' },
       { source: 'vLLM', date: '2026-10-23', title: 'vLLM 首日支持 MiniMax-M3.1-Flash', path: '2026-10-23-minimax-m31-flash-zh.html' },
       { source: 'vLLM', date: '2026-10-23', title: 'GLM-5.3 优化（二）：在 16 张 H200 上结合 PCP、DCP 与混合 HiSparse', path: '2026-10-23-glm53-part2-pcp-dcp-hisparse-zh.html' },
@@ -245,7 +250,8 @@
         const button = document.createElement('button');
         button.type = 'button';
         button.className = `article${selected === article.path ? ' active' : ''}`;
-        button.innerHTML = `<span class="article-title"></span><span class="article-meta"><span class="source${article.source === 'SGLang' ? ' sglang' : ''}">${article.source}</span><span>${article.date}</span></span>`;
+        const sourceClass = article.source === 'SGLang' ? ' sglang' : article.source === 'AMD' ? ' amd' : '';
+        button.innerHTML = `<span class="article-title"></span><span class="article-meta"><span class="source${sourceClass}">${article.source}</span><span>${article.date}</span></span>`;
         button.querySelector('.article-title').textContent = article.title;
         button.addEventListener('click', () => selectArticle(article, true));
         list.append(button);

@@ -6,6 +6,8 @@ vLLM 官方博客的中文翻译与本地交互版本。
 
 SGLang 官方博客的中文翻译单独保存在 [`sglang_blog_cn/`](sglang_blog_cn/README.md)。
 
+AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](amd_blog_cn/README.md)。
+
 ## 文章
 
 - [Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面](2026-11-04-introducing-kinference-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-04-introducing-kinference)）

@@ -1,0 +1,612 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Kimi K3.1 Pro 登陆 AMD Instinct GPU：首日支持与优化">
+  <title>Kimi K3.1 Pro 登陆 AMD Instinct GPU：首日支持与优化</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">AMD Blog · 中文翻译</div>
+        <h1>Kimi K3.1 Pro 登陆 AMD Instinct GPU：首日支持与优化</h1>
+        <p class="original-title">Kimi K3.1 Pro on AMD Instinct GPUs: Day-0 support and optimization</p>
+        <div class="meta">
+          <span>作者：Bill He、Hattie Wu、Seungrok Jung、Andy Luo、Hongxia Yang、Gilbert Lei、Carlus Huang、Lingpeng Jin、Chuan (Richard) Li、Peng Sun</span>
+          <span>发布日期：2026-11-04</span>
+          <a href="https://www.amd.com/en/developer/resources/technical-articles/2026/kimi-k3-1-pro-on-amd-instinct-gpus.html">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Kimi K3.1 Pro 登陆 AMD Instinct GPU：首日支持与优化</h1>
+<p><img src="assets/2026-11-04-kimi-k3-1-pro-on-amd-instinct-gpus/kimi-k-3-header.png" alt="Kimi K3.1 Pro 在 AMD Instinct GPU 上运行"></p>
+<h2>摘要</h2>
+<ul>
+<li>Kimi K3.1 Pro 是 Moonshot AI 推出的开放权重、原生多模态智能体模型，拥有 2.8 万亿总参数、每 token 激活 1040 亿参数和 100 万 token 上下文。模型发布首日即可使用已发布的 MXFP4 检查点和 DSpark 推测解码草稿模型，在 8 张 AMD Instinct™ MI355X GPU 上通过 ATOM 与 vLLM 提供服务。</li>
+<li>K3.1 Pro 延续 Kimi K3 的混合架构：69 个 Kimi Delta Attention（KDA）层、24 个潜在注意力层，以及包含 896 个专家的 MXFP4 MoE。它为全部 24 个注意力层加入稀疏索引器（DSA），每个查询从历史中选择 2,048 个 token。ATOM 通过共享 DSA 路径执行这些层，在 FP8 潜在 KV 缓存旁维护 FP8 索引缓存。</li>
+<li>ATOM 提供原生 KDA 与稀疏 MLA 内核、基于 FlyDSL MXFP4 分组 MoE 的路由专家、启动时应用的逐通道 FP8 注意力，以及共享目标模型 KV 缓存并以 CUDA Graph 捕获方式运行的 DSpark 草稿模型。</li>
+<li>vLLM 使用节省内存的稀疏注意力和解码上下文并行（DCP）支持长上下文服务，并为低延迟交互负载提供专用解码路径。</li>
+<li>在 Moonshot AI 的 Kimi Vendor Verifier 上、推理强度设为 max 时，ATOM 的 OCRBench 得分为 0.871（Moonshot 参考值 0.872），工具调用 JSON Schema 得分为 0.997。</li>
+</ul>
+<h2>引言</h2>
+<p>Kimi K3.1 Pro 发布首日即可在 AMD Instinct MI350 系列 GPU 上运行：AMD 推理引擎 ATOM 基于 ROCm™ 软件，并使用 AITER 和 FlyDSL 内核提供服务。该模型从 Kimi K3 出发，通过大规模联合强化学习完成后训练。Moonshot AI 将它描述为其能力最强的 3T 级模型，具备 100 万 token 上下文窗口、可选择的推理强度（low、high、max）、原生工具调用和图像输入能力。</p>
+<p>本文介绍 K3.1 Pro 相对 Kimi K3 的变化、ATOM 的服务实现、部署方法，以及它在 Moonshot AI 厂商验证套件中的准确率。</p>
+<h2>Kimi K3.1 Pro 架构概览</h2>
+<p>从推理角度看，有五项关键特性：</p>
+<ul>
+<li><strong>混合注意力进一步稀疏化。</strong> 93 个解码器层中，69 个使用 Kimi Delta Attention，这是一种为每个请求维护固定大小循环状态的门控线性注意力。其余 24 个为门控潜在注意力（MLA）层，即每四层一个并加上最后一层。K3.1 Pro 为每个 MLA 层加入索引器（32 个头、每头维度 128），对请求历史打分并选出排名最高的 2,048 个 token。无论上下文多长，每个查询最多读取 2,048 个 token，只有轻量索引器需要扫描完整历史。</li>
+<li><strong>每个注意力层有两个小缓存。</strong> 每个 MLA 层为每个 token 缓存一个宽度为 576 的潜在向量（512 维压缩 KV 加 64 维 RoPE）和一个索引键。</li>
+<li><strong>宽规模潜在 MoE。</strong> 模型包含 896 个路由专家，每个 token 激活 16 个，另有两个共享专家。路由专家在宽度 3,584 的潜在空间中工作，这是 7,168 隐藏维度的一半，并使用 SiTU-GLU 激活。只有第一层是稠密层。</li>
+<li><strong>采用量化感知训练的 MXFP4。</strong> 路由专家以 MXFP4 保存，每 32 个值共享一个 E8M0 scale。注意力、索引器、共享专家、稠密 MLP、潜在上下投影、路由器、语言模型头和视觉编码器使用 BF16。</li>
+<li><strong>DSpark 推测解码。</strong> 一个独立的五层 MLA 草稿模型读取目标模型最后五层的隐藏状态，每一步提出一组草稿 token。</li>
+</ul>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>配置</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>参数量</td>
+<td>总计 2.8T，每 token 激活 104B</td>
+</tr>
+<tr>
+<td>解码器层</td>
+<td>93 层：69 个 KDA、24 个门控 DSA（MLA + 索引器）；第 1 层为稠密层，其余为 MoE</td>
+</tr>
+<tr>
+<td>KDA</td>
+<td>96 个头，头维度 128，宽度为 4 的短卷积</td>
+</tr>
+<tr>
+<td>MLA</td>
+<td>96 个头；Q LoRA rank 1,536；KV LoRA rank 512 + 64 维 RoPE；输出门控</td>
+</tr>
+<tr>
+<td>DSA 索引器</td>
+<td>32 个头 × 128 维；选择 top-2,048 token；每个 MLA 层均有一个</td>
+</tr>
+<tr>
+<td>专家</td>
+<td>896 个路由专家（top-16、sigmoid 路由）+ 2 个共享专家；在 3,584 维潜在空间中，专家中间维度为 3,072</td>
+</tr>
+<tr>
+<td>词表 / 上下文</td>
+<td>163,840 / 1,048,576 token</td>
+</tr>
+<tr>
+<td>视觉</td>
+<td>MoonViT-V2 编码器（401M 参数）</td>
+</tr>
+<tr>
+<td>DSpark 草稿模型</td>
+<td>5 个 MLA 层（96 个头）、交错 YaRN RoPE、低秩 Markov 头（rank 512）</td>
+</tr>
+</tbody></table>
+<h2>使用 ATOM 提供服务</h2>
+<p>ATOM 在单个 MI355X 节点的八张 GPU 上使用张量并行，从已发布的 MXFP4 检查点直接为 Kimi K3.1 Pro 的文本和图像输入提供服务，无需格式转换。加载 DSpark 草稿模型后，启动期间每张 GPU 的峰值显存约为 199 GB（总容量 288 GB），一个 100 万 token 的请求可以放入单个节点。</p>
+<h3>优化内容</h3>
+<p><strong>Kimi Delta Attention。</strong> 预填充阶段运行 AITER 的分块 Kimi Delta Attention 内核。解码阶段通过融合的门控 delta-rule 更新推进每个请求的循环状态，这些状态存放在按请求分配的池中。</p>
+<p><strong>共享 DSA 路径上的稀疏 MLA。</strong> ATOM 使用与 DeepSeek-V3.2、GLM-5 等模型共享的 DSA 实现执行 K3.1 的索引器。潜在 KV 和索引键保存在采用 128-token block 的 FP8 分页缓存中。索引器的键投影和头权重投影被打包进该层融合的 Q/KV 下投影，因此一次 GEMM 就能同时生成查询潜在向量、KV 潜在向量和索引键。随后，top-2,048 选择结果驱动稀疏 MLA 注意力。</p>
+<p><strong>FlyDSL 上的 MXFP4 潜在 MoE。</strong> 路由专家运行在 FlyDSL 原生 SiTUv2 分组 MoE 内核上，第一阶段使用 MXFP4 权重，第二阶段使用 FP8。两个共享专家在另一条 stream 上与路由专家并行运行。</p>
+<p><strong>PTPC FP8 注意力。</strong> 启动时，ATOM 将 BF16 注意力层和稠密线性层重新量化为逐输出通道一个 scale 的 FP8，并在运行时对激活逐 token 缩放（<code>--online_quant_config</code> 配合 <code>ptpc_fp8</code>）。每个 rank 需要处理 559 个线性层，约 2 秒完成。路由专家、KDA 卷积、视觉编码器以及打包索引器的下投影保留原始存储格式。</p>
+<p><strong>DSpark 推测解码。</strong> 草稿模型的 576 维潜在向量与目标模型 MLA 层形状相同，因此 ATOM 把五个草稿层作为额外行绑定到目标模型的 KV 池中，它们也继承 FP8 缓存数据类型。一次并行提出全部草稿 token 的草稿 block 被捕获进 CUDA Graph。</p>
+<p><strong>解码上下文并行。</strong> 面对多个并发长上下文请求，ATOM 沿序列维度把潜在 KV 缓存分片到全部八张 GPU（<code>--decode-context-parallel-size 8</code>）。每张 GPU 只在自己的分片上执行注意力，再通过 all-to-all 合并局部结果。MLA 查询投影在组内复制，因此每一步无需对查询做 all-gather。每个索引器层执行后都会重新构建稀疏注意力元数据。</p>
+<p><strong>Mono 解码。</strong> 对延迟敏感的服务中，ATOM 用两个融合内核替换解码或验证步骤中的每个 KDA 层：K1 执行经过 KDA 循环状态的注意力路径，K2 执行输出投影和潜在 MoE。MLA 层继续使用分页稀疏注意力，同时也运行 K2。Mono 支持每步最多 64 行 token，例如一个请求同时验证七个草稿 token。</p>
+<h3>性能</h3>
+<p><strong>Mono 解码的单请求延迟。</strong> 与同一服务的标准解码路径相比，Mono 解码将平均每输出 token 时间降低了 33.6%。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>标准解码</th>
+<th>Mono 解码</th>
+<th>改进</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>平均 TPOT</td>
+<td>5.78 ms</td>
+<td>3.84 ms</td>
+<td>33.6%</td>
+</tr>
+</tbody></table>
+<p><strong>采用解码上下文并行时的吞吐量。</strong> 测试环境为 MI355X、TP8/DCP8、并发度 16、64 个 prompt、关闭前缀缓存、五个草稿 token、采用标准接受机制和 BF16 草稿模型。</p>
+<table>
+<thead>
+<tr>
+<th>输入 / 输出 token</th>
+<th>总吞吐量（token/s）</th>
+<th>输出吞吐量（token/s）</th>
+<th>TTFT 中位数（秒）</th>
+<th>TPOT 中位数（毫秒）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>8K / 1K</td>
+<td>7,484</td>
+<td>831.6</td>
+<td>0.821</td>
+<td>16.36</td>
+</tr>
+<tr>
+<td>128K / 100</td>
+<td>14,005</td>
+<td>10.68</td>
+<td>27.9</td>
+<td>1,146</td>
+</tr>
+</tbody></table>
+<h3>运行方法</h3>
+<p>启动容器：</p>
+<pre><code class="language-bash">docker pull rocm/atom-dev:kimi-k31-pro
+docker run -it --device /dev/dri --device /dev/kfd \
+  --network host --ipc host --group-add video \
+  --cap-add=SYS_PTRACE --security-opt seccomp=unconfined \
+  --ulimit memlock=-1 --ulimit stack=67108864 \
+  -v /models:/models \
+  rocm/atom-dev:kimi-k31-pro
+</code></pre>
+<p>使用 TP8 和 DSpark 启动服务：</p>
+<pre><code class="language-bash">MODEL=/models/Kimi-K3.1-Pro
+DRAFT=/models/Kimi-K3.1-DSpark       # 本地目录
+AITER_LOG_LEVEL=WARNING AITER_SITUV2_A4W4=1 AITER_FLYDSL_STAGE2_FP8=1 \
+ATOM_USE_FLYDSL_FP8_PREFILL_ATTN=1 ATOM_GDN_SSM_DTYPE=fp16 ATOM_STATE_CHECKPOINT_DEMAND=0 \
+python -m atom.entrypoints.openai_server \
+  --model $MODEL --served-model-name kimi-k3.1-pro --trust-remote-code \
+  --tensor-parallel-size 8 --server-port 8000 \
+  --kv_cache_dtype fp8 --block-size 128 --enable_prefix_caching \
+  --state-checkpoint-interval-tokens -1 \
+  --max-num-seqs 32 --max-num-batched-tokens 8192 --gpu-memory-utilization 0.90 \
+  --level 3 --cudagraph-mode FULL \
+  --online_quant_config &#39;{&quot;global_quant_config&quot;:&quot;ptpc_fp8&quot;,&quot;exclude_layer&quot;:[&quot;lm_head&quot;,&quot;model.embed_tokens&quot;,&quot;*self_attn.[qkv]_conv1d*&quot;,&quot;*block_sparse_moe.experts*&quot;,&quot;*block_sparse_moe.routed_expert_*&quot;,&quot;*vision_tower*&quot;,&quot;*mm_projector*&quot;,&quot;*self_attn.fused_qkv_a_proj*&quot;,&quot;*self_attn.indexer*&quot;]}&#39; \
+  --method dspark --draft-model $DRAFT --num-speculative-tokens 4
+</code></pre>
+<p>注意事项：</p>
+<ul>
+<li>必须使用 <code>--block-size 128</code>：这是 MLA 的布局，草稿模型的数据行保存在目标模型的 page 中。</li>
+<li>未指定 <code>--max-model-len</code> 时，服务使用模型的 1,048,576-token 上限。</li>
+<li>不使用推测解码时，删除命令最后一行。</li>
+<li>每个请求通过顶层 <code>reasoning_effort</code> 字段设置推理强度（low、high、max）。多轮对话和工具调用必须把完整的 assistant 消息传回，包括 <code>reasoning_content</code> 和 <code>tool_calls</code>。</li>
+</ul>
+<p>快速验证：</p>
+<pre><code class="language-bash">curl http://localhost:8000/v1/chat/completions -H &quot;Content-Type: application/json&quot; -d &#39;{
+  &quot;model&quot;: &quot;kimi-k3.1-pro&quot;,
+  &quot;messages&quot;: [{&quot;role&quot;: &quot;user&quot;, &quot;content&quot;: &quot;What is the weather in Paris? Use the tool.&quot;}],
+  &quot;tools&quot;: [{&quot;type&quot;: &quot;function&quot;, &quot;function&quot;: {&quot;name&quot;: &quot;get_weather&quot;,
+    &quot;parameters&quot;: {&quot;type&quot;: &quot;object&quot;, &quot;properties&quot;: {&quot;city&quot;: {&quot;type&quot;: &quot;string&quot;}},
+                   &quot;required&quot;: [&quot;city&quot;], &quot;additionalProperties&quot;: false}}}],
+  &quot;tool_choice&quot;: &quot;required&quot;, &quot;reasoning_effort&quot;: &quot;max&quot;, &quot;max_tokens&quot;: 2048}&#39;
+</code></pre>
+<p>推理过程会在 <code>reasoning_content</code> 中返回，<code>get_weather({&quot;city&quot;: &quot;Paris&quot;})</code> 调用则出现在 <code>tool_calls</code> 中。</p>
+<h3>准确率</h3>
+<p>除特别说明外，以下评测均在 8 张 MI355X GPU 上使用 ATOM、将推理强度设为 max。MMMU-Pro、OCRBench、BEAM 和工具调用 Schema 检查均来自 Moonshot AI 的 Kimi Vendor Verifier（KVV）。</p>
+<table>
+<thead>
+<tr>
+<th>基准</th>
+<th>参数</th>
+<th>ATOM</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MMMU-Pro（标准版，10 个选项），1,730 道题</td>
+<td>effort max、temperature 1.0、top_p 0.95、最大 98,304 token</td>
+<td>0.842（±0.009）</td>
+</tr>
+<tr>
+<td>OCRBench，1,000 道题</td>
+<td>effort max、temperature 1.0、top_p 0.95、最大 16,384 token</td>
+<td>0.871（±0.011）</td>
+</tr>
+<tr>
+<td>BEAM（1M），700 道题</td>
+<td>effort max、temperature 1.0、top_p 0.95；由 GPT-4.1 评判</td>
+<td>0.416</td>
+</tr>
+<tr>
+<td>GSM8K 5-shot，1,319 道题</td>
+<td>贪心解码</td>
+<td>宽松 0.978 / 严格 0.977（±0.004）</td>
+</tr>
+<tr>
+<td>工具调用 JSON Schema，428 项检查</td>
+<td>effort max、最大 2,048 token、每项一次尝试</td>
+<td>0.997（427 / 428）</td>
+</tr>
+</tbody></table>
+<ul>
+<li>MMMU-Pro 和工具调用 Schema 检查运行在“运行方法”一节的服务配置上。</li>
+<li>OCRBench 使用 TP8/DCP8、BF16 KV 缓存、FP8 索引缓存和七个草稿 token。</li>
+<li>GSM8K 与 BEAM 使用 TP8，不启用推测解码；BEAM 使用 100 万 token 上下文和前缀缓存。</li>
+<li>BEAM 由 GPT-4.1 评判，而 Moonshot AI 参考结果使用的是另一个评判模型，因此两者分数不在同一标尺上。</li>
+</ul>
+<h2>使用 vLLM 提供服务</h2>
+<p>vLLM 使用 MXFP4 检查点和 DSpark 推测解码，在 AMD Instinct MI355X GPU 上支持 Kimi K3.1 Pro。ROCm 实现建立在 AITER 与 FlyDSL 内核之上，将节省内存的稀疏注意力、面向长上下文服务的解码上下文并行（DCP），以及面向低延迟交互负载的专用解码路径组合起来。</p>
+<h3>优化内容</h3>
+<p><strong>原生 MXFP4 索引。</strong> 索引器扫描上下文，为稀疏注意力选择最多 2,048 个 token。包含 scale 在内，MXFP4 将每个索引键从 FP8 的 132 字节减到 68 字节，使索引缓存占用减少 <strong>48.5%</strong>。打分使用原生 FP4 矩阵指令，并以 FP32 做累加和按头加权归约。推测验证期间，多个查询行复用同一组键，减少重复读取。</p>
+<p>更小的索引缓存为上下文缓存释放更多 GPU 内存，有利于高并发长上下文服务。在 AgentX 扫描测试中，MXFP4 索引器配置在并发度 48 时使整体工作负载吞吐量提高 <strong>5.3%</strong>。</p>
+<p><strong>预填充：上下文并行稀疏注意力。</strong> 预填充期间，GPU 收集索引键，并在彼此之间划分查询行。每张 GPU 用完整上下文对分配给自己的查询行打分并直接选择全局 top-k，避免合并各 rank 的局部候选。如果这样能减少通信且符合 workspace 预算，主注意力可以另行收集 KV，再为本地注意力头处理全部查询行。</p>
+<p>组合后的 DCP 预填充优化提升了开发基准中的吞吐和延迟表现，对长输入的收益最大。</p>
+<table>
+<thead>
+<tr>
+<th>输入 / 输出 token</th>
+<th>总吞吐量（token/s）</th>
+<th>输出吞吐量（token/s）</th>
+<th>TTFT 中位数（秒）</th>
+<th>TPOT 中位数（毫秒）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>8K / 1K</td>
+<td>5,357.8 → 6,015.4（+12%）</td>
+<td>595.3 → 668.4</td>
+<td>2.462 → 1.875</td>
+<td>24.571 → 22.063</td>
+</tr>
+<tr>
+<td>128K / 100</td>
+<td>6,950 → 17,678（+154%）</td>
+<td>5.30 → 13.48</td>
+<td>268.7 → 105.5</td>
+<td>331.5 → 129.6</td>
+</tr>
+</tbody></table>
+<p>FlyDSL 稀疏 MLA 直接从 FP8 KV 缓存读取选中的 token。每个 workgroup 跨本地注意力头处理一个查询行，利用预填充步骤中大量查询行提供并行度。小批量继续使用 Triton 路径，以暴露单个查询行内部的更多并行度。在八张 MI355X GPU 上的另一组受控对比中，为 128K 输入负载启用 FlyDSL 稀疏 MLA，使输出吞吐量提高 <strong>7.0%</strong>。</p>
+<table>
+<thead>
+<tr>
+<th>实现</th>
+<th>基准时长（秒）</th>
+<th>TTFT 中位数（秒）</th>
+<th>输出吞吐量（token/s）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Triton</td>
+<td>432.8</td>
+<td>96.2</td>
+<td>14.79</td>
+</tr>
+<tr>
+<td>FlyDSL</td>
+<td>404.4</td>
+<td>89.8</td>
+<td>15.83</td>
+</tr>
+<tr>
+<td>改进</td>
+<td>降低 6.6%</td>
+<td>降低 6.6%</td>
+<td>提高 7.0%</td>
+</tr>
+</tbody></table>
+<p><strong>解码：融合低延迟解码。</strong> DSA 索引和稀疏注意力分别运行，随后由持久化单体内核把注意力输出投影、AttnRes 和完整潜在 MoE（包括张量并行 all-reduce）融合为一次 launch。KDA 层还会融合输入投影、短卷积、循环状态更新和门控归一化。专用路径支持最多八行 token 的验证批量，包括一个请求携带七个草稿 token 的情形。</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>普通路径</th>
+<th>专用解码</th>
+<th>改进</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>平均 TPOT</td>
+<td>6.02 ms</td>
+<td>4.40 ms</td>
+<td>27.0%</td>
+</tr>
+</tbody></table>
+<p><strong>通信：高效跨 GPU 通信。</strong> 解码期间，每张 GPU 交换候选分数，同时将 token ID 保留在本地。共享阈值和一致的平分处理规则决定选择哪些本地候选。对 2,048 个候选，只交换分数可以把每个查询、每张 GPU 的候选 payload 从 16 KiB 减半到 8 KiB。</p>
+<p>AITER 通过专用 GPU 内核加速 DCP all-gather：它经由 HIP IPC 读取 peer buffer，并直接写入所需输出布局，从而把数据收集和布局转换合并，避免额外重排复制。在八张 MI355X GPU 的独立微基准中，对测试的查询和候选 tensor 形状，AITER 路径相较 RCCL 将 all-gather 延迟降低了 <strong>53%～61%</strong>。</p>
+<h3>运行方法</h3>
+<p>以下配置使用八张 AMD Instinct MI355X GPU、TP8/DCP8、FP8 MLA KV 缓存、MXFP4 索引键，以及带五个草稿 token 的 DSpark。请把检查点路径改为 Kimi K3.1 Pro 和匹配 DSpark 草稿模型的本地副本。</p>
+<p>该配置使用标准拒绝采样，与下方准确率评测一致。CPU KV offload 会在八个 rank 上合计预留约 1.64 TiB 主机内存，除此之外还需要满足其他运行时内存需求。100 万 token 上下文上限和 48 个序列上限，并不意味着系统一定能同时容纳 48 个 100 万 token 请求。</p>
+<p>启动容器：</p>
+<pre><code class="language-bash">docker pull vllm/vllm-openai-rocm:kimi-k31
+docker run -it --rm \
+  --device /dev/dri --device /dev/kfd \
+  --network host --ipc host --group-add video \
+  -v /models:/models \
+  --entrypoint /bin/bash vllm/vllm-openai-rocm:kimi-k31
+</code></pre>
+<p>使用 DCP8 和 DSpark 启动服务：</p>
+<pre><code class="language-bash"># 48 个解码 bucket 加 27 个混合/预填充 bucket。
+GRAPH=&#39;{&quot;mode&quot;:3,&quot;cudagraph_mode&quot;:&quot;FULL_AND_PIECEWISE&quot;,&quot;max_cudagraph_capture_size&quot;:10240,&quot;custom_ops&quot;:[&quot;+fused_rms_norm_gated&quot;],&quot;cudagraph_capture_sizes&quot;:[6,12,18,24,30,36,42,48,54,60,66,72,78,84,90,96,102,108,114,120,126,132,138,144,150,156,162,168,174,180,186,192,198,204,210,216,222,228,234,240,246,252,258,264,270,276,282,288,320,352,384,416,448,480,512,640,768,896,1024,1280,1536,1792,2048,2560,3072,3584,4096,4608,5120,6144,6400,7168,8192,8704,10240]}&#39;
+
+VLLM_USE_V2_MODEL_RUNNER=1 VLLM_USE_BREAKABLE_CUDAGRAPH=1 \
+VLLM_ROCM_USE_AITER=1 VLLM_ROCM_DCP_AITER_ALLGATHER=1 \
+VLLM_ROCM_USE_AITER_FLYDSL_SPARSE_MLA=1 AITER_FLYDSL_SPARSE_MLA=1 \
+VLLM_ROCM_QUICK_REDUCE_QUANTIZATION=INT4 \
+VLLM_ROCM_QUICK_REDUCE_MIN_SIZE_BYTES_M8=16 \
+AITER_FLYDSL_STAGE2_FP8=1 \
+vllm serve moonshotai/Kimi-K3.1-Pro \
+  --served-model-name kimi-k3.1-pro --trust-remote-code \
+  --language-model-only \
+  --tensor-parallel-size 8 --decode-context-parallel-size 8 \
+  --dcp-comm-backend a2a --cp-kv-cache-interleave-size 1 \
+  --kv-cache-dtype fp8 --enable-prefix-caching --prefix-match-unit 64 \
+  --attention-config &#39;{&quot;mla_prefill_backend&quot;:&quot;ROCM_AITER_FA&quot;,&quot;indexer_kv_dtype&quot;:&quot;mxfp4&quot;}&#39; \
+  --hf-overrides &#39;{&quot;text_config&quot;:{&quot;dsa_config&quot;:{&quot;indexer_use_fp8&quot;:true}}}&#39; \
+  --additional-config &#39;{&quot;kda_prefill_backend&quot;:&quot;fused&quot;}&#39; \
+  --quantization-config &#39;{&quot;targets&quot;:{&quot;*in_proj_qkvgfab&quot;:&quot;fp8_per_channel&quot;}}&#39; \
+  --max-model-len 1048576 \
+  --max-num-seqs 48 --max-num-batched-tokens 10240 \
+  --gpu-memory-utilization 0.92 \
+  --compilation-config &quot;$GRAPH&quot; \
+  --kv-transfer-config &#39;{&quot;kv_connector&quot;:&quot;SimpleCPUOffloadConnector&quot;,&quot;kv_role&quot;:&quot;kv_both&quot;,&quot;kv_connector_extra_config&quot;:{&quot;cpu_bytes_to_use_per_rank&quot;:224875000000,&quot;lazy_offload&quot;:false}}&#39; \
+  --speculative-config &quot;{\&quot;model\&quot;:\&quot;Inferact/Kimi-K3.1-Pro-DSpark-preview\&quot;,\&quot;method\&quot;:\&quot;dspark\&quot;,\&quot;num_speculative_tokens\&quot;:5,\&quot;attention_backend\&quot;:\&quot;ROCM_AITER_MLA\&quot;,\&quot;kv_cache_dtype\&quot;:\&quot;fp8\&quot;,\&quot;draft_sample_method\&quot;:\&quot;probabilistic\&quot;,\&quot;rejection_sample_method\&quot;:\&quot;block\&quot;}&quot; \
+  --enable-auto-tool-choice --tool-call-parser kimi_k3 \
+  --reasoning-parser kimi_k3 \
+  --host 0.0.0.0 --port 8000
+</code></pre>
+<h3>vLLM 准确率</h3>
+<p>以下评测使用标准拒绝采样，对比采用 DSpark 时的 FP8 与 MXFP4 索引器。</p>
+<table>
+<thead>
+<tr>
+<th>基准</th>
+<th>vLLM FP8 索引器</th>
+<th>vLLM MXFP4 索引器</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GSM8K 5-shot，T = 0.7</td>
+<td>1295/1319（98.18%）</td>
+<td>1291/1319（97.88%）</td>
+</tr>
+<tr>
+<td>Passkey，8K～500K 上下文，25 个案例</td>
+<td>25/25</td>
+<td>25/25</td>
+</tr>
+<tr>
+<td>LongBench-v2 short，贪心解码</td>
+<td>125/180（69.44%）</td>
+<td>124/180（68.89%）</td>
+</tr>
+<tr>
+<td>OCRBench，effort max、temperature 1.0、top_p 0.95、最大 16,384 token</td>
+<td>0.871 ± 0.0106</td>
+<td>0.870 ± 0.0106</td>
+</tr>
+<tr>
+<td>工具调用 JSON Schema，effort max、最大 2,048 token</td>
+<td>407/408（99.75%）</td>
+<td>407/408（99.75%）</td>
+</tr>
+</tbody></table>
+<h2>致谢</h2>
+<p>Kimi K3.1 Pro 的首日支持是模型厂商、推理引擎和硬件社区共同努力的成果。</p>
+<p>感谢 Moonshot AI 团队创造 Kimi K3.1 Pro，在权重发布前分享架构细节，贡献初始模型集成，并在正确性和生产验证方面紧密合作。</p>
+<p>感谢 Inferact 团队将模型集成进 vLLM，实现服务语义和多模态支持，构建部署方法，并推动端到端性能优化。</p>
+<p>感谢 Jin Lingpeng、Wang Yiting、Zhu Yuhua、Yan Zhiwei、Zhang Lirong 和 Wu Hattie 对 AMD ATOM 首日支持的贡献；感谢 Bill He、Yichao Zhu、Seungrok Jung、Hyukjoon Lee、Hongxia Yang 和 Richard Li 对 AMD vLLM 首日支持的贡献；也感谢 Carlus Huang、Gilbert Lei、Peng Sun 和 Andy Luo 的跨团队协作。</p>
+<p>最重要的是，感谢更广泛的开源社区和 AMD ROCm 开发者社区对 Kimi K3.1 Pro 在 AMD Instinct GPU 上运行的期待、测试和反馈。我们期待把模型权重以及面向 AMD Instinct MI355X GPU 的 ATOM、vLLM 推理引擎支持交到大家手中。</p>
+<h2>测试配置与免责声明</h2>
+<p>ATOM 结果于 2026 年 11 月在 8 张 AMD Instinct MI355X GPU 上、包含 Kimi K3.1 改动的 ROCm ATOM 开发容器中测得。检查点为 Kimi K3.1 Pro 正式版本（MXFP4 路由专家），并使用 Kimi K3.1 DSpark 草稿模型。准确率来自 Kimi Vendor Verifier。其他硬件、软件版本、设置或工作负载的结果可能不同。这些数字仅作说明，不构成性能保证。</p>
+<blockquote>
+<p>本文为中文翻译，技术参数和测试结论以<a href="https://www.amd.com/en/developer/resources/technical-articles/2026/kimi-k3-1-pro-on-amd-instinct-gpus.html">英文原文</a>为准。</p>
+</blockquote>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
