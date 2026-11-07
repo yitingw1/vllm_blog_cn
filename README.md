@@ -10,6 +10,7 @@ AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](a
 
 ## 文章
 
+- [零不匹配与简单异步强化学习：REINFORCE Zero、DeepSeek-V4.1 和 Kimi K3.1](2026-11-06-zero-mismatch-async-rl-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-zero-mismatch-async-rl)）
 - [Kinference：面向 vLLM 与 Kubernetes 的开源推理控制平面](2026-11-04-introducing-kinference-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-04-introducing-kinference)）
 - [vLLM 首日支持 Kimi K3.1 Pro](2026-11-04-kimi-k31-pro-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-04-kimi-k31-pro)）
 - [GLM-5.3 优化（一）：vLLM 中的混合 HiSparse 卸载](2026-09-08-glm53-part1-hybrid-sparse-offloading-zh.html)（[英文原文](https://vllm.ai/blog/2026-09-08-glm53-part1-hybrid-sparse-offloading)）
