@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="将 vLLM 迁移到 LibTorch 稳定 ABI">
+  <title>将 vLLM 迁移到 LibTorch 稳定 ABI</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>将 vLLM 迁移到 LibTorch 稳定 ABI</h1>
+        <p class="original-title">Migrating vLLM to the LibTorch Stable ABI</p>
+        <div class="meta">
+          <span>作者：vLLM 团队、Red Hat PyTorch 团队与 Meta PyTorch 团队</span>
+          <span>发布日期：2026-11-06</span>
+          <a href="https://vllm.ai/blog/2026-11-06-stable-abi-cuda">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>将 vLLM 迁移到 LibTorch 稳定 ABI</h1>
+<h2>引言</h2>
+<p>vLLM 高度依赖 PyTorch，其 C++ 后端会频繁调用 LibTorch。因此，即使 API 没有变化，LibTorch 二进制接口的变化也可能迫使 vLLM 重新构建和链接。如果更新 LibTorch 时不必重新构建 vLLM，会怎样？这正是 LibTorch 稳定 ABI（Stable ABI）要解决的问题。</p>
+<p>采用 LibTorch 稳定 ABI 后，更新 LibTorch 不再要求重新构建或更新 vLLM。我们可以直接替换 <code>torch</code> wheel，再将它导入现有 vLLM 软件包。从 <strong>v0.33.0</strong> 开始，vLLM 发布采用 LibTorch 稳定 ABI 的 CUDA wheel。</p>
+<p><img src="assets/2026-11-06-stable-abi-cuda/unstable_import-v4.png" alt="不稳定 ABI：新 torch 要求重新构建 vLLM"></p>
+<p><img src="assets/2026-11-06-stable-abi-cuda/stable_import-v4.png" alt="稳定 ABI：vLLM 可以直接导入新 torch"></p>
+<p><em>左：不稳定 ABI——升级 torch 后必须重新构建 vLLM。右：稳定 ABI——vLLM 可以直接导入新版 torch。</em></p>
+<blockquote>
+<p><strong>注意：</strong> vLLM 与 PyTorch 的兼容性仍取决于其他因素，包括 Python API、GPU 相关要求（例如最低支持的 CUDA 版本）以及第三方依赖。LibTorch 稳定 ABI 解决的是二进制兼容性，并不会消除这些其他约束。</p>
+</blockquote>
+<h2>什么是 LibTorch 稳定 ABI？</h2>
+<p>应用二进制接口（Application Binary Interface，ABI）规定编译后的代码如何与库交互：函数怎样调用、数据怎样布局、符号怎样命名。即使 API 在源代码层面看起来没有变化，ABI 的改变仍可能要求扩展重新构建。稳定 ABI 会在兼容版本之间保持一组受支持的二进制接口，使使用这些接口的扩展无需重新构建即可继续运行。</p>
+<p>PyTorch 的 LibTorch 稳定 ABI 分为三层：</p>
+<ol>
+<li>稳定的 C shim，公开选定的 LibTorch API；</li>
+<li>C++ 包装器，让 C shim 更易使用；</li>
+<li><code>torch::headeronly</code> 中的纯头文件工具，它们不链接 <code>libtorch.so</code>。</li>
+</ol>
+<p><img src="assets/2026-11-06-stable-abi-cuda/libtorch_stable.png" alt="LibTorch 稳定 ABI"></p>
+<h2>稳定 ABI 为什么重要</h2>
+<p>采用稳定 ABI 之前，新版 PyTorch 可能要求重新构建 vLLM，导致新版本及其功能的支持被推迟。采用稳定 ABI 后，同一个 vLLM wheel 可以跨多个兼容的 PyTorch 版本工作，让用户更早升级，也减少软件包发行方的重复构建工作。</p>
+<p>对开发者而言，这意味着你可以更新并重新构建 PyTorch，然后直接在 vLLM 中测试这些改动，无需重新构建 vLLM。</p>
+<p><img src="assets/2026-11-06-stable-abi-cuda/unstable_vllm-v4.jpg" alt="不稳定 ABI 下 vLLM 需要跟随 LibTorch 变化"></p>
+<p><img src="assets/2026-11-06-stable-abi-cuda/stable_vllm-v4.jpg" alt="稳定 ABI 下 vLLM 与 LibTorch 可以独立变化"></p>
+<p><em>左：LibTorch 变化时，vLLM 也需要变化。右：vLLM 可以独立于 LibTorch 变化。</em></p>
+<h2>权衡</h2>
+<p>LibTorch 稳定 ABI 只覆盖完整 LibTorch 的一个有限子集。虽然稳定 C shim 和更高层的 C++ 便利包装器已经支持许多常用操作，但并非全部操作都已覆盖。例如，在迁移期间，<code>is_pinned()</code> 没有对应的稳定接口。</p>
+<p>好在通用的 <code>torch_call_dispatcher</code> C shim 可以让我们通过 dispatcher，以 ABI 稳定的方式调用 ATen 操作。这样既能保持原有行为，也能获得 ABI 稳定性。这次迁移也帮助 PyTorch 团队了解哪些 API 使用频繁；在 PyTorch 2.14 中，他们加入了稳定的 C++ <code>is_pinned()</code> 方法。</p>
+<p>迁移前，直接调用 LibTorch 方法：</p>
+<pre><code class="language-cpp">if (cpu_tensor.is_pinned())
+</code></pre>
+<p>迁移后，通过 ABI 稳定的 dispatcher 调用：</p>
+<pre><code class="language-cpp">std::array&lt;StableIValue, 2&gt; is_pinned_stack{
+    torch::stable::detail::from(cpu_tensor),
+    torch::stable::detail::from(std::nullopt)};
+TORCH_ERROR_CODE_CHECK(torch_call_dispatcher(
+    &quot;aten::is_pinned&quot;, &quot;&quot;, is_pinned_stack.data(), TORCH_ABI_VERSION));
+if (torch::stable::detail::to&lt;bool&gt;(is_pinned_stack[0]))
+</code></pre>
+<p>第二项权衡是少量额外的主机端开销。稳定 C shim 会增加类型转换开销；对于依赖 <code>torch_call_dispatcher</code> 的部分包装器，还会增加算子查找和装箱开销。这些开销通常可以忽略，并且在 CUDA Graph 预热后会消失；但在 eager 模式中反复启动极快的内核时，它们可能产生影响。迁移期间，我们没有观察到明显的运行时性能回退。</p>
+<h2>将 vLLM 迁移到稳定 ABI</h2>
+<p>我们把稳定 ABI 迁移拆分为以下步骤。</p>
+<h3>1. 评估现状</h3>
+<p>首先，我们评估 vLLM 能否使用当时已有的稳定 API 完成迁移。我们盘点了项目对 PyTorch API 的调用，识别缺口，并规划填补缺口所需的稳定 API。相关工作记录在将 vLLM CUDA 构建迁移至 LibTorch 稳定 ABI 的原始 <a href="https://github.com/vllm-project/vllm/issues/26946">RFC</a> 中。</p>
+<h3>2. 将 AutogradFunction 和 meta 函数迁移到 Python</h3>
+<p>截至目前，LibTorch 稳定 ABI 尚不支持稳定的 <code>SymInt</code>，因此 meta 函数需要用 Python 编写，不能继续放在 C++ 中。幸运的是，vLLM 的大多数 meta 函数已经使用 Python，实现少数剩余函数的迁移相对简单，也让项目更加一致。</p>
+<p>类似地，稳定 ABI 没有公开 PyTorch 的 autograd 机制，所以 <code>AutogradFunction</code> 也必须使用 Python 编写。对于 vLLM 这样的推理引擎，这一点影响较小；但如果实现 backward 函数，就需要将其放在 Python 中。</p>
+<h3>3. 建立必要的迁移脚手架</h3>
+<p>vLLM 是一个大型项目，仅 CUDA 构建就包含 175 个以上 <code>.cpp</code>/<code>.cu</code> 源文件和另外 120 多个头文件。一次性迁移全部代码不仅难以管理，也难以审查。</p>
+<p>因此，我们先创建了独立的稳定库（参见首个迁移 <a href="https://github.com/vllm-project/vllm/pull/31509/changes#diff-1e7de1ae2d059d21e1dd75d5812d5a34b0222cef273b7c3a2af62eb747f9d20a">PR #31509</a> 中的 <code>CMakeLists.txt</code> 更新），再将内核分批迁移进去。构建标志 <code>TORCH_TARGET_VERSION</code> 会在稳定库包含任何不稳定 LibTorch 头文件时让构建失败，从而帮助保持 ABI 稳定性。</p>
+<p><img src="assets/2026-11-06-stable-abi-cuda/unstable_to_stable_library.png" alt="随着稳定库增长，不稳定库逐渐缩小并最终消失"></p>
+<p><em>随着稳定库不断增长，不稳定库逐渐缩小，最终消失。</em></p>
+<h3>4. 确保通过 dispatcher 注册算子</h3>
+<p>目前，注册 LibTorch 稳定算子需要使用 <code>STABLE_TORCH_LIBRARY</code>。如果你已经使用 <code>TORCH_LIBRARY</code> 注册算子，这套机制会很熟悉。新的稳定注册方式最主要的区别是：实现需要由 <code>TORCH_BOX</code> 包装。它会生成一个适配器，在 C++ 数据类型与可穿过 PyTorch 稳定 ABI 的通用 <code>StableIValue</code> 类型之间完成装箱和拆箱。</p>
+<p>如果内核通过其他机制注册，例如 pybind11，建议先把注册转换为 <code>TORCH_LIBRARY</code>，再迁移至 <code>STABLE_TORCH_LIBRARY</code>。下文“迁移过程中的挑战”会进一步说明这一点。</p>
+<h3>5. 将每个源文件迁移到稳定 API</h3>
+<p>完成步骤 1～4 后，就可以逐个将源文件迁移至稳定 API。所包含的 PyTorch 头文件应来自 C++ 稳定包装器、纯头文件工具或 C shim 本身：</p>
+<pre><code class="language-text">torch/csrc/stable
+torch/headeronly
+torch/csrc/stable/c/shim.h（或 torch/csrc/inductor/aoti_torch/c/shim.h）
+</code></pre>
+<p>大部分源文件修改都是机械式替换，例如：</p>
+<pre><code class="language-text">torch::Tensor → torch::stable::Tensor
+at::kInt → torch::headeronly::ScalarType::Int
+t.view({...}) → torch::stable::view(t, {...})
+</code></pre>
+<p>为了帮助迁移，我们为 AI agent 创建了一组技能，用来把现有 API 映射到稳定版本，并标记常见错误，例如与迁移无关的改动。这些技能也支持更早的步骤 1～4。它们已经在实际工作中发挥作用，但我们还没有开发相应评测来衡量效果。详见 <a href="https://github.com/janeyx99/abi-stable-skills">abi-stable-skills</a>。</p>
+<h3>6. 验证</h3>
+<p>vLLM 服务着多个行业的数百万用户，我们不希望迁移打断任何用户的工作流程。因此，整个列表中最重要的一步是验证迁移没有引入重大变化：运行适当的单元测试和性能测试，并逐行人工审查每个迁移 diff，确保没有意外更新。</p>
+<p>除了验证正确性，还需要确认新库确实满足 LibTorch ABI 稳定性。我们使用 <a href="https://pypi.org/project/torch-abi-audit/">torch-abi-audit</a>（感谢 Ralf Gommers）完成这项工作。该工具检查 <code>.so</code> 文件，并将 PyTorch 符号分为稳定和不稳定两类。如果没有不稳定符号，该库就是 LibTorch ABI 稳定的。它还会报告提供所有所需稳定符号的最低 LibTorch 版本，例如 <code>min-torch=2.11.0</code>。</p>
+<p>我们用它追踪迁移进度、检查回退，现在也在 vLLM CI 中使用它，保证 wheel 持续满足 LibTorch ABI 稳定性。</p>
+<p>迁移依赖之前：</p>
+<pre><code class="language-text">torch-abi-audit vllm
+Package: vllm
+  Root: /workspaces/vllm_container/vllm/vllm
+  Torch ABI:   UNSTABLE
+  Min torch:   2.11.0
+  CPython ABI: mixed
+  Extensions:  10
+  Bundled libs: 0
+  -- extensions --
+    [STABLE  ] [abi3-ok          ] _C_stable_libtorch.abi3.so (stable_shim=88, unstable=0) min-torch=2.11.0
+    [UNSTABLE] [abi3-ok          ] _flashmla_C.abi3.so         (stable_shim=0, unstable=70)
+    [UNSTABLE] [abi3-ok          ] _flashmla_extension_C.abi3.so (stable_shim=0, unstable=68)
+    [STABLE  ] [abi3-ok          ] _moe_C_stable_libtorch.abi3.so (stable_shim=72, unstable=0) min-torch=2.11.0
+    [UNSTABLE] [abi3-ok          ] _qutlass_C.abi3.so          (stable_shim=0, unstable=59)
+    [NO-TORCH] [abi3-ok          ] cumem_allocator.abi3.so
+    [NO-TORCH] [abi3-ok          ] spinloop.abi3.so
+    [UNSTABLE] [uses-private-api ] third_party/deep_gemm/_C.cpython-312-x86_64-linux-gnu.so
+    [UNSTABLE] [abi3-ok          ] vllm_flash_attn/_vllm_fa2_C.abi3.so
+    [UNSTABLE] [abi3-ok          ] vllm_flash_attn/_vllm_fa3_C.abi3.so
+</code></pre>
+<h2>vLLM 构建依赖</h2>
+<p>只迁移 vLLM 自身源代码，并不能证明整个 vLLM wheel 都具备 ABI 稳定性。要让 wheel 完全稳定，其依赖 LibTorch 的编译依赖也必须采用 LibTorch 稳定 ABI。vLLM 当时有七个这样的依赖：</p>
+<table>
+<thead>
+<tr>
+<th>依赖</th>
+<th>vLLM fork 已迁移</th>
+<th>上游已迁移</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>FlashMLA</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>DeepGEMM</td>
+<td>✅</td>
+<td>🚧 进行中</td>
+</tr>
+<tr>
+<td>FlashAttention-2</td>
+<td>✅</td>
+<td>🚧 已提交稳定化 PR</td>
+</tr>
+<tr>
+<td>FlashAttention-3</td>
+<td>✅</td>
+<td>✅</td>
+</tr>
+<tr>
+<td>DeepSelect</td>
+<td>✅</td>
+<td>🚧 进行中</td>
+</tr>
+<tr>
+<td>FlashKDA</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>QuTLASS</td>
+<td>不适用</td>
+<td>✅</td>
+</tr>
+</tbody></table>
+<p>完成 vLLM 树内代码迁移后，这些依赖也逐一迁移到 LibTorch 稳定 ABI，使整个 vLLM CUDA wheel 获得 ABI 稳定性。</p>
+<pre><code class="language-text">torch-abi-audit vllm
+Package: vllm
+  Root: /workspaces/vllm_container/vllm/vllm
+  Torch ABI:   STABLE
+  Min torch:   2.13.0
+  CPython ABI: abi3
+  Extensions:  13
+  Bundled libs: 0
+  -- extensions --
+    [STABLE  ] [abi3-ok] _C_stable_libtorch.abi3.so       min-torch=2.11.0
+    [STABLE  ] [abi3-ok] _deepselect_C.abi3.so            min-torch=2.10.0
+    [STABLE  ] [abi3-ok] _flashkda_C.abi3.so              min-torch=2.11.0
+    [STABLE  ] [abi3-ok] _flashmla_C.abi3.so              min-torch=2.11.0
+    [STABLE  ] [abi3-ok] _flashmla_extension_C.abi3.so    min-torch=2.11.0
+    [STABLE  ] [abi3-ok] _moe_C_stable_libtorch.abi3.so   min-torch=2.11.0
+    [STABLE  ] [abi3-ok] _qutlass_C.abi3.so               min-torch=2.13.0
+    [NO-TORCH] [abi3-ok] cumem_allocator.abi3.so
+    [NO-TORCH] [abi3-ok] fs_io_C.abi3.so
+    [NO-TORCH] [abi3-ok] spinloop.abi3.so
+    [STABLE  ] [abi3-ok] third_party/deep_gemm/_C_extension.abi3.so min-torch=2.11.0
+    [STABLE  ] [abi3-ok] vllm_flash_attn/_vllm_fa2_C.abi3.so min-torch=2.10.0
+    [STABLE  ] [abi3-ok] vllm_flash_attn/_vllm_fa3_C.abi3.so min-torch=2.10.0
+</code></pre>
+<h2>时间线</h2>
+<table>
+<thead>
+<tr>
+<th>日期</th>
+<th>进展</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>2025 年 10 月 15 日</td>
+<td>发起讨论稳定 ABI 迁移的 <a href="https://github.com/vllm-project/vllm/issues/26946">RFC</a></td>
+</tr>
+<tr>
+<td>2025 年 11 月 13 日</td>
+<td>将 C++ meta 函数重写为 Python，<a href="https://github.com/vllm-project/vllm/pull/28595">PR #28595</a></td>
+</tr>
+<tr>
+<td>2025 年 12 月 29 日</td>
+<td>首个迁移 <a href="https://github.com/vllm-project/vllm/pull/31509">PR #31509</a> 创建</td>
+</tr>
+<tr>
+<td>2026 年 3 月 19 日</td>
+<td>首个迁移 PR 完成</td>
+</tr>
+<tr>
+<td>2026 年 5 月</td>
+<td>创建 <a href="https://github.com/janeyx99/abi-stable-skills">abi-stable-skills</a></td>
+</tr>
+<tr>
+<td>2026 年 6 月</td>
+<td>合并 12 个以上 PR，使 vLLM 树内代码达到 LibTorch ABI 稳定</td>
+</tr>
+<tr>
+<td>2026 年 7 月 27～29 日</td>
+<td>首批将 DeepGEMM 从 pybind11 迁移到稳定 ABI 的 PR 创建</td>
+</tr>
+<tr>
+<td>2026 年 7～9 月</td>
+<td>FlashMLA、QuTLASS、FlashAttention 2、FlashKDA、FlashAttention 3 和 DeepSelect 迁移到稳定 ABI</td>
+</tr>
+<tr>
+<td>2026 年 10 月 15 日</td>
+<td>DeepGEMM 完成迁移；vLLM CUDA wheel 达到 LibTorch ABI 稳定</td>
+</tr>
+</tbody></table>
+<h2>迁移过程中的挑战</h2>
+<p>最大的挑战是跟上这个大型快速演进项目的变化。迁移补丁开发期间，上游文件经常发生改变，因此补丁在合并前需要持续更新。vLLM 的外部依赖也要求我们跨项目协调，并为迁移构建支持。</p>
+<h2>DeepGEMM：迁移案例</h2>
+<p>DeepGEMM 集中体现了上述多个挑战。迁移过程中，DeepGEMM 从版本 1 升级到版本 2，并加入了 DeepJIT；后者同样依赖 LibTorch，也需要迁移。随后，vLLM 从上游 <code>deepseek-ai/DeepGEMM</code> 仓库切换到自己的 <code>vllm-project/DeepGEMM</code> fork，迫使我们在新 fork 上重新执行迁移。</p>
+<p>上游变化只是挑战的一部分。由于 DeepGEMM 通过 pybind11 注册算子，在采用稳定 ABI 之前，我们还必须把注册方式迁移到 <code>TORCH_LIBRARY</code>。例如，<code>fp8_fp4_paged_mqa_logits</code> 原先这样绑定：</p>
+<pre><code class="language-cpp">m.def(&quot;fp8_fp4_paged_mqa_logits&quot;, &amp;fp8_fp4_paged_mqa_logits,
+      py::arg(&quot;q&quot;), ...,
+      py::arg(&quot;max_context_len&quot;), ...);
+</code></pre>
+<p>其中，<code>q</code> 的类型是 <code>std::tuple&lt;Tensor, std::optional&lt;Tensor&gt;&gt;&amp;</code>，<code>max_context_len</code> 是 <code>const int&amp;</code>。为了让参数兼容 <code>TORCH_LIBRARY</code>，我们加入一个包装器，分别接收 tuple 的各个元素，并在 C++ 签名中使用 <code>int64_t</code>：</p>
+<pre><code class="language-cpp">static torch::Tensor fp8_fp4_paged_mqa_logits(
+    const torch::Tensor&amp; q, const c10::optional&lt;torch::Tensor&gt;&amp; q_sf, ...
+    const int64_t&amp; max_context_len, ...) {
+  return attention::fp8_fp4_paged_mqa_logits(
+      std::make_tuple(q, q_sf), ...,
+      static_cast&lt;int&gt;(max_context_len), ...);
+}
+</code></pre>
+<p>现在可以用 <code>TORCH_LIBRARY</code> 注册：</p>
+<pre><code class="language-cpp">TORCH_LIBRARY_FRAGMENT(deep_gemm, m) {
+    m.def(&quot;fp8_fp4_paged_mqa_logits(Tensor q, Tensor? q_sf, ..., int max_context_len, ...) -&gt; Tensor&quot;);
+}
+
+TORCH_LIBRARY_IMPL(deep_gemm, CUDA, m) {
+    m.impl(&quot;fp8_fp4_paged_mqa_logits&quot;, TORCH_FN(fp8_fp4_paged_mqa_logits));
+}
+</code></pre>
+<p>Python 接口先拆开 tuple，再调用已注册的算子：</p>
+<pre><code class="language-python">def fp8_fp4_paged_mqa_logits(q, ..., max_context_len, ...):
+    q_fp, q_sf = q[0], q[1]
+    return _torch_ops.fp8_fp4_paged_mqa_logits(
+        q_fp, q_sf, ..., max_context_len, ...)
+</code></pre>
+<p>这样既能改用 <code>TORCH_LIBRARY</code>，又不改变面向用户的 API。</p>
+<p>DeepGEMM 完成 <code>TORCH_LIBRARY</code> 迁移后，稳定 ABI 迁移就与其他依赖类似：替换不稳定 API，并更新算子注册方式。</p>
+<pre><code class="language-cpp">STABLE_TORCH_LIBRARY_FRAGMENT(deep_gemm, m) {
+    m.def(&quot;fp8_fp4_paged_mqa_logits(Tensor q, Tensor? q_sf, ..., int max_context_len, ...) -&gt; Tensor&quot;);
+}
+
+STABLE_TORCH_LIBRARY_IMPL(deep_gemm, CUDA, m) {
+    m.impl(&quot;fp8_fp4_paged_mqa_logits&quot;, TORCH_BOX(fp8_fp4_paged_mqa_logits));
+}
+</code></pre>
+<p>DeepGEMM 是 vLLM 最后一个需要迁移的构建依赖；完成这项工作后，整个 vLLM wheel 都实现了 LibTorch ABI 稳定。</p>
+<h2>在新版 PyTorch 上运行示例</h2>
+<p>示例脚本：</p>
+<pre><code class="language-python"># stable_abi_demo.py
+import os
+
+os.environ.setdefault(&quot;VLLM_USE_FLASHINFER_SAMPLER&quot;, &quot;0&quot;)
+
+import torch
+import vllm
+from vllm import LLM, SamplingParams
+
+print(f&quot;PyTorch runtime: {torch.__version__}&quot;)
+print(f&quot;vLLM: {vllm.__version__}&quot;)
+
+llm = LLM(
+    model=&quot;HuggingFaceTB/SmolLM2-135M-Instruct&quot;,
+    max_model_len=128,
+    gpu_memory_utilization=0.1,
+    enforce_eager=True,
+)
+outputs = llm.generate(
+    [&quot;The capital of France is&quot;],
+    SamplingParams(temperature=0, max_tokens=8),
+)
+print(outputs[0].outputs[0].text)
+</code></pre>
+<p>使用 PyTorch 2.14.1 构建 vLLM 并运行演示：</p>
+<pre><code class="language-text">&gt; python stable_abi_demo.py
+
+PyTorch runtime: 2.14.1+cu132
+vLLM: 0.1.dev24716+gcb95d994f.d20261105
+Paris. Paris is a city known for
+</code></pre>
+<p>把 PyTorch wheel 更新至 <code>torch==2.15.0</code>：</p>
+<pre><code class="language-bash">uv pip install torch==2.15.0 \
+  --index-url https://download.pytorch.org/whl/cu132
+</code></pre>
+<p>不重新构建 vLLM，直接再次运行演示：</p>
+<pre><code class="language-text">&gt; python stable_abi_demo.py
+
+PyTorch runtime: 2.15.0+cu132
+vLLM: 0.1.dev24716+gcb95d994f.d20261105
+Paris. Paris is a city known for
+</code></pre>
+<blockquote>
+<p>为了清晰起见，上述输出省略了常规 vLLM 初始化日志、进度条和无关的弃用警告。</p>
+</blockquote>
+<h2>后续工作</h2>
+<p>现在 vLLM 的 CUDA 构建已经使用 LibTorch 稳定 ABI，下一步是让 vLLM 的所有构建都达到 ABI 稳定，包括 CPU 和 ROCm 构建。这些迁移的规模比 CUDA 迁移小，但对 vLLM 生态仍然重要。</p>
+<p>ROCm 构建与 CUDA 构建共享许多源文件：<code>hipify</code> 会把 <code>.cu</code> 文件转换成 <code>.hip</code> 文件，因此这些共享文件已经使用 LibTorch 稳定 ABI。现在只剩少数 ROCm 专用文件需要迁移。</p>
+<p>我们也在扩展稳定 API 的覆盖范围，让 vLLM 及其依赖不再需要额外包装器。随着 API 覆盖面的扩大，我们还会更新 PyTorch 上游测试，确保这些 API 持续保持 LibTorch ABI 稳定。</p>
+<h2>主要贡献者致谢</h2>
+<ul>
+<li><strong>vLLM 社区：</strong> <a href="https://github.com/Harry-Chen">Shengqi Chen</a>（主要协调者）、<a href="https://github.com/ZJY0516">Jiangyun Zhu</a>（DeepSelect fork 迁移）、<a href="https://github.com/gau-nernst">Thien Tran</a>（FlashKDA fork 迁移）、<a href="https://github.com/LopezCastroRoberto">Roberto L. Castro</a>（QuTLASS 上游迁移）、<a href="https://github.com/youkaichao">Kaichao You</a>（路线图），以及所有审查 PR 并提供建议的维护者。</li>
+<li><strong>PyTorch 社区：</strong> <a href="https://github.com/janeyx99">Jane Xu</a>（项目负责人、FlashMLA fork 与上游迁移、<a href="https://github.com/janeyx99/abi-stable-skills">abi-stable-skills</a> 项目）、<a href="https://github.com/cleonard530">Chris Leonard</a>（主要迁移工作）、<a href="https://github.com/mikaylagawarecki">Mikayla Gawarecki</a>（树内源文件的早期迁移工作）、<a href="https://github.com/rgommers">Ralf Gommers</a>（<a href="https://pypi.org/project/torch-abi-audit/">torch-abi-audit</a> 项目）。</li>
+<li><strong>DeepSeek：</strong> <a href="https://github.com/LyricZhao">Chenggang Zhao</a>、<a href="https://github.com/oraluben">Yichen Yan</a>、<a href="https://github.com/interestingLSY">Shengyu Liu</a>。</li>
+</ul>
+<blockquote>
+<p>本文由 Codex 根据 vLLM 英文原文翻译整理；如有歧义，请以原文为准。</p>
+</blockquote>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
