@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练">
+  <title>VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练</h1>
+        <p class="original-title">VeRL-Omni v0.3.0: Async Training and Broader Multimodal Post-Training</p>
+        <div class="meta">
+          <span>作者：VeRL-Omni 团队</span>
+          <span>发布日期：2026-11-06</span>
+          <a href="https://vllm.ai/blog/2026-11-06-verl-omni-v0-3-0">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练</h1>
+<p>继 8 月发布 <a href="https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0">v0.2.0</a> 后，<a href="https://github.com/verl-project/verl-omni">VeRL-Omni</a> v0.3.0 进一步扩大了单一统一栈中可通过强化学习训练的任务范围。本次发布将异步执行扩展到更多多模态 RL 工作负载，让 V1 trainer 成为默认选择，并将后训练覆盖范围扩展到图像、视频、音频和多模态理解。</p>
+<p>在 v0.2.0 的 rollout 批处理与可复用模型适配器基础上，这次的重点是让整个流水线协同工作：生成、奖励评估、策略更新和权重同步。</p>
+<p>两个端到端配方展示了其实际意义：</p>
+<ul>
+<li>MiniMax H3 使用 DiffusionNFT 进行音视频后训练；</li>
+<li>MiniCPM-o 4.5 使用 GSPO，并支持 colocated-sync 或 separate-async 执行。</li>
+</ul>
+<p>两者共同说明一个重要设计原则：正确的执行模式取决于工作负载。只有当 rollout 与训练的重叠收益能够抵偿为各角色分配资源的成本时，重叠执行才有帮助；现在可以准确测量这种权衡。</p>
+<p>发布资料：<a href="https://github.com/verl-project/verl-omni/releases/tag/v0.3.0">v0.3.0 release notes</a> · <a href="https://github.com/verl-project/verl-omni">代码仓库</a> · <a href="https://vllm.ai/blog/2026-08-20-verl-omni-v0-2-0">v0.2.0 博客</a></p>
+<h2>1. 异步与解耦的 RL 执行</h2>
+<p>多模态 RL 包含多个昂贵阶段，而且每个阶段的资源需求不同。自回归模型可能花很长时间生成回答；扩散模型需要反复执行去噪步骤；音视频奖励还会增加解码和评分模型推理。严格交替的循环会在某个角色工作时让另一个角色闲置。v0.3.0 通过更丰富的执行路径打破这一瓶颈：</p>
+<ul>
+<li><strong>完全异步 rollout</strong> 现已扩展到 Qwen3-Omni 的文本和音频输入训练，使用 release notes 中列出的受支持 FSDP 配方。</li>
+<li><strong>Separate-async Omni 训练</strong> 将 actor 和 rollout 引擎放在独立 GPU 池中。生成和训练通过 replay buffer 连接，可配置的同步间隔控制 rollout worker 接收策略更新的频率。</li>
+<li><strong>Separate-async 扩散训练</strong> 增加权重同步和动态混合 rollout 切换。当 replay buffer 数据不足时，可以临时把 colocated actor 副本借给 rollout，并在需要训练时收回。</li>
+<li><strong>扩散模型在线策略蒸馏（OPD）</strong> 增加异步 teacher 调度和独立 teacher 路由，让 teacher 执行可独立于 actor 管理。</li>
+</ul>
+<p>这些变化的重点是提供选择，而不是给出一套适用于所有任务的规定。下文 MiniCPM-o 案例说明，GPU 划分、生成长度与 trainer 的关键路径必须结合起来测量。</p>
+<h2>2. 共享的 V1 训练基础</h2>
+<p>围绕 <code>TransferQueue</code> 和 <code>ReplayBuffer</code> 构建的 V1 trainer 现在成为默认实现。v0.3.0 将 V1 同步配方扩展到多种扩散模型，同时强化 rollout 与训练间的数据交接：成组轨迹一起写入，减少不必要的数据读取，并进一步验证调度与批次顺序。</p>
+<p>rollout 栈升级到 vLLM 0.30.0 和 vLLM-Omni 0.30.0（<code>12e9280</code>）。生命周期变化让请求取消与策略更新更明确：暂停前先中止请求，sleep/wake 状态转换必须收到确认，权重更新失败会传播给调用方。当生成、显存回收和权重同步反复跨越执行边界时，这些行为非常重要。</p>
+<p>对于扩散工作负载，prompt embedding 缓存避免重复编码；rollout sequence parallelism 与 VAE parallelism 提供更多扩展控制。具名媒体产物（named media artifacts）明确标记图像、视频、音频和 latent 输出，让奖励函数与导出器消费声明的输出，不再根据张量形状猜测模态。</p>
+<h2>3. 配方与训练结果</h2>
+<h3>3.1 MiniMax H3：音视频联合后训练</h3>
+<p>MiniMax H3 同时生成视频和音频，因此其后训练流水线必须在生成、奖励评估、actor 更新和导出过程中保留两种模态。v0.3.0 为 H3 增加 FlowGRPO 与 DiffusionNFT 训练支持。这里重点介绍 DiffusionNFT 的 T2VA 和 FL2VA 案例。</p>
+<ul>
+<li><strong>T2VA</strong>：从文本生成音视频。</li>
+<li><strong>FL2VA</strong>：默认使用首帧图像生成音视频。<code>frame_mode</code> / <code>FRAME_INDICES</code> 协议也支持 <code>last</code> 和 <code>first_last</code>；本案例使用 <code>FRAME_INDICES=&#39;[0]&#39;</code>，仅固定首帧。</li>
+</ul>
+<p>两者都使用 vLLM-Omni 执行 rollout、Diffusers/FSDP2 执行 actor 训练，并由 VeRL-Omni 负责编排、奖励和策略同步。在 FL2VA 中，条件帧 latent 保持固定，训练目标只优化生成内容。</p>
+<p>DiffusionNFT 通过正向过程训练目标进行奖励引导优化，无需为每个反向去噪步骤保存 transition log-probability。案例使用 CLAP 衡量文本与音频对齐，并使用 ImageBind reward（CC-BY-NC-SA）衡量音视频对应关系。</p>
+<p>流水线将两条路径分开：vLLM-Omni rollout 引擎根据 prompt 生成音视频——在本 FL2VA 案例中还包含固定首帧 latent——并把解码媒体传给奖励评分器；与此同时，干净 latent 和条件元数据进入 Diffusers/FSDP2 actor 进行训练。</p>
+<p>T2VA 示例脚本默认使用 <code>ROLLOUT_TP=2</code>、<code>ROLLOUT_N=16</code>；FL2VA 使用 <code>ROLLOUT_TP=4</code>、<code>ROLLOUT_N=16</code>。下表是 launcher 默认值，只描述案例配置，不是不同版本间的性能对比。两个 DiffusionNFT launcher 都设置 <code>trainer.use_v1=false</code>：H3 FlowGRPO 在 v0.3.0 已有 V1 同步配方，但这些 DiffusionNFT launcher 仍使用旧 V0 路径，因此以下结果不应理解为 V1 结果。</p>
+<table>
+<thead>
+<tr>
+<th>设置</th>
+<th>T2VA</th>
+<th>FL2VA</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>GPU / rollout tensor parallelism</td>
+<td>8 / TP=2</td>
+<td>8 / TP=4</td>
+</tr>
+<tr>
+<td>每个 prompt 的样本数</td>
+<td>16</td>
+<td>16</td>
+</tr>
+<tr>
+<td>训练 / 验证分辨率</td>
+<td>256×384 / 512×768</td>
+<td>288×448 / 576×928</td>
+</tr>
+<tr>
+<td>帧数</td>
+<td>121</td>
+<td>请求 96；vLLM-Omni 对齐到下一个 <code>17n+5</code> 边界，即 107</td>
+</tr>
+<tr>
+<td>rollout / 验证去噪步数</td>
+<td>10 / 40</td>
+<td>10 / 40</td>
+</tr>
+<tr>
+<td>LoRA rank / alpha</td>
+<td>64 / 128</td>
+<td>64 / 128</td>
+</tr>
+<tr>
+<td>奖励</td>
+<td>CLAP + ImageBind</td>
+<td>CLAP + ImageBind</td>
+</tr>
+</tbody></table>
+<p>报告的 T2VA 运行中，<code>critic/rewards/mean</code> 从约 0.27 开始，在约 60 个步骤内上升至接近 0.4。</p>
+<p><img src="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-train-reward.svg" alt="MiniMax H3 DiffusionNFT 训练奖励"></p>
+<p><em>报告的 T2VA 训练奖励。</em></p>
+<blockquote>
+<p>奖励上升表明所选奖励信号得到优化，但它本身不能证明整体视觉质量或时间一致性普遍提升。下面的分项验证奖励和固定样本输出提供互补检查。</p>
+</blockquote>
+<p><img src="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-eval-reward.svg" alt="MiniMax H3 验证奖励分项"></p>
+<p><em>应结合阅读 CLAP、ImageBind 与综合验证奖励，不能把聚合值当作完整质量评估。</em></p>
+<p>案例使用相同 prompt、随机种子和推理设置比较基础模型与训练后输出。其中一个 prompt 是：“17 世纪的帆船在暴风雨中破浪前行。”</p>
+<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
+  <video controls muted loop playsinline preload="metadata" style="width:min(100%,420px);flex:1 1 320px"><source src="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-ship-base.mp4" type="video/mp4"></video>
+  <video controls muted loop playsinline preload="metadata" style="width:min(100%,420px);flex:1 1 320px"><source src="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-ship-diffusionnft.mp4" type="video/mp4"></video>
+</div>
+
+<p><em>左：MiniMax H3 基础模型。右：MiniMax H3 + DiffusionNFT。</em></p>
+<p><a href="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-ship-base.mp4">单独打开基础模型视频</a> · <a href="assets/2026-11-06-verl-omni-v0-3-0/minimax-h3-ship-diffusionnft.mp4">单独打开 DiffusionNFT 视频</a></p>
+<p>这是参考文章中的定性案例，不是完整基准测试。预览视频没有声音，不能展示音频质量或同步效果。</p>
+<p>该集成也说明了为何必须显式验证训练—推理一致性：H3 的训练和 rollout 引擎使用不同权重布局，需要把 LoRA 映射到融合推理投影；时间步和 velocity 约定需要模型专用处理；音频必须同时送达奖励模型与导出输出。仅靠 loss 或奖励曲线变化无法证明三者都正确。</p>
+<p>可从 <a href="https://github.com/verl-project/verl-omni/blob/v0.3.0/examples/diffusionnft_trainer/minimax_h3/README.md">v0.3.0 H3 DiffusionNFT 配方</a> 开始。</p>
+<h3>3.2 MiniCPM-o 4.5：GSPO 的同步与 separate-async 对比</h3>
+<p>MiniCPM-o 4.5 Thinker 训练把 Group Sequence Policy Optimization（GSPO）用于音视频问答（AVQA）。Separate-async 配方把 FSDP actor 与 vLLM-Omni rollout worker 放在独立资源池，通过 replay buffer 让生成提前运行。</p>
+<p><strong>训练质量。</strong> <a href="https://github.com/verl-project/verl-omni/pull/629">PR #629</a> 报告了非常接近的早期收敛结果：第 13 步的 score，separate-async 为 0.764，colocated sync 为 0.762；第 10 步的验证奖励二者均为 0.747。曲线显示，在共同训练窗口内行为相似。</p>
+<p><img src="assets/2026-11-06-verl-omni-v0-3-0/minicpmo-gspo-training-score.svg" alt="MiniCPM-o 4.5 AVQA GSPO 训练分数"></p>
+<p><em>训练平均分随步骤变化。青色：separate-async；橙色：colocated sync。同步运行持续时间超过图中异步运行。</em></p>
+<p><img src="assets/2026-11-06-verl-omni-v0-3-0/minicpmo-gspo-validation-reward.svg" alt="MiniCPM-o 4.5 AVQA GSPO 验证奖励"></p>
+<p><em>共同窗口内的学习行为相当；这些曲线没有测量达到目标质量所需的时间。</em></p>
+<p><strong>执行效率。</strong> 后续实验通过强制响应长度来研究资源放置决策。在单节点 4×H800 80 GB、学习率相同的条件下，实验比较：</p>
+<ul>
+<li>colocated 4+0（2×TP2），<code>train_batch_size=128</code>；</li>
+<li>separate-async 3+1（1×TP1），<code>train_batch_size=120</code>，<code>ppo_mini_batch_size=15</code>，即每步 8 个 mini-batch。</li>
+</ul>
+<p>两组不能共用 batch size 128：<code>rollout.n=16</code> 时，colocated 每步产生 <code>128×16=2048</code> 条轨迹，无法被 3 个 FSDP rank 整除；<code>120×16=1920</code> 则可以。由于 prompt 数量不同，下表同时报告秒/步和秒/prompt，资源放置结论以每 prompt 指标为准。</p>
+<table>
+<thead>
+<tr>
+<th>平均响应长度</th>
+<th>Colocated 4+0（2×TP2），batch 128</th>
+<th>Separate-async 3+1（1×TP1），batch 120</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>约 101 token（自然长度）</td>
+<td>194.8 s/步；1.522 s/prompt</td>
+<td>199.5 s/步；1.663 s/prompt；约慢 9%</td>
+</tr>
+<tr>
+<td>512 token（强制）</td>
+<td>259.7 s/步；2.029 s/prompt</td>
+<td>244.7 s/步；2.039 s/prompt；基本持平</td>
+</tr>
+<tr>
+<td>1024 token（强制）</td>
+<td>360.1 s/步；2.813 s/prompt</td>
+<td>314.9 s/步；2.624 s/prompt；约快 6.7%</td>
+</tr>
+</tbody></table>
+<p>数据是一次运行中连续 20 步（第 3～22 步）的稳态均值，而不是独立试验。长度通过 <code>rollout.ignore_eos=True + max_response_length=N</code> 强制设置。每 prompt 数值用秒/步除以对应组的 <code>train_batch_size</code>。</p>
+<p>对于短的自然回答，separate-async 3+1 每 prompt 约慢 9%；到 512 token 时两者基本持平；在 512～1024 token 之间，separate-async 开始超过 colocated，并在 1024 token 时每 prompt 约快 6.7%。原始秒/步指标更早、更明显地偏向 separate-async，但因为异步组每步处理的 prompt 更少，该指标会夸大收益。</p>
+<p>实际建议是：对于短回答、由 trainer 主导的工作负载，colocated sync 仍是正确默认值；当回答足够长、生成占主导，且模型允许 TP1 rollout 副本时，3+1 式 separate-async 可以取胜，而且长度越长优势越大。</p>
+<p>标记版本的 separate-async launcher 默认使用 2 张 trainer GPU + 2 张 rollout GPU、<code>train_batch_size=128</code>。按照<a href="https://github.com/verl-project/verl-omni/blob/v0.3.0/examples/gspo_trainer/README.md">配方文档</a>准备模型和 AVQA 数据后，可用以下命令复现 3+1 / 120 实验：</p>
+<pre><code class="language-bash">bash examples/gspo_trainer/minicpm/run_minicpmo_4_5_thinker_gspo_lora_avqa_separate_async_v1.sh \
+  data.train_batch_size=120 \
+  actor_rollout_ref.actor.ppo_mini_batch_size=15 \
+  trainer.n_gpus_per_node=3 \
+  actor_rollout_ref.rollout.n_gpus_per_node=1
+</code></pre>
+<h2>4. 模型与算法扩展</h2>
+<p>本次发布同时扩展新集成与现有模型系列。表中列出具体新增项；已有模型增加新配方不计为新模型。</p>
+<table>
+<thead>
+<tr>
+<th>模型 / 范围</th>
+<th>v0.3.0 新增内容</th>
+<th>参考</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MiniMax H3</td>
+<td>面向文本、关键帧和参考条件音视频生成的 FlowGRPO 与 DiffusionNFT；GPU 与 Ascend NPU 配方</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/368">FlowGRPO #368</a>、<a href="https://github.com/verl-project/verl-omni/pull/383">DiffusionNFT #383</a></td>
+</tr>
+<tr>
+<td>BOOGU-Image</td>
+<td>文生图与编辑的 FlowGRPO；DiffusionNFT，包括无 CFG 的 Pick-a-Pic 配方</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/332">#332</a>、<a href="https://github.com/verl-project/verl-omni/pull/765">#765</a></td>
+</tr>
+<tr>
+<td>MiniCPM-o 4.5</td>
+<td>Thinker AVQA GSPO、separate-async GSPO，以及图像/音频单模态偏好批次的离线 DPO</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/572">#572</a>、<a href="https://github.com/verl-project/verl-omni/pull/629">#629</a>、<a href="https://github.com/verl-project/verl-omni/pull/550">#550</a></td>
+</tr>
+<tr>
+<td>Qwen3-TTS</td>
+<td>GRPO、Hindi SFT-LoRA/GRPO 配方，以及通用 Talker RL 接口</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/428">#428</a>、<a href="https://github.com/verl-project/verl-omni/pull/590">#590</a></td>
+</tr>
+<tr>
+<td>FLUX.1-dev</td>
+<td>DanceGRPO 训练</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/532">#532</a></td>
+</tr>
+<tr>
+<td>LTX-2.3</td>
+<td>V1 sync FlowGRPO 配方，以及 Ascend NPU 上的 T2AV OmniNFT LoRA</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/574">#574</a>、<a href="https://github.com/verl-project/verl-omni/pull/750">#750</a></td>
+</tr>
+<tr>
+<td>Qwen3-Omni</td>
+<td>扩展 async、DAPO、OPD、NPU GSPO 和 Megatron 配方覆盖；受支持的异步路径使用 FSDP</td>
+<td><a href="https://github.com/verl-project/verl-omni/releases/tag/v0.3.0">支持详情</a></td>
+</tr>
+<tr>
+<td>SD3.5</td>
+<td>Direct Group Preference Optimization（DGPO），包含 V1 OCR LoRA 配方</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/733">#733</a></td>
+</tr>
+<tr>
+<td>扩散蒸馏</td>
+<td>独立 DMD2 loss 与配置</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/545">#545</a></td>
+</tr>
+<tr>
+<td>扩散 OPD</td>
+<td>异步 teacher 调度与独立 teacher 路由</td>
+<td><a href="https://github.com/verl-project/verl-omni/pull/427">#427</a>、<a href="https://github.com/verl-project/verl-omni/pull/495">#495</a></td>
+</tr>
+<tr>
+<td>Qwen-Image / Qwen-Image-Edit / Wan2.2</td>
+<td>为现有算法提供更广的 V1 同步配方覆盖</td>
+<td><a href="https://github.com/verl-project/verl-omni/releases/tag/v0.3.0">配方列表</a></td>
+</tr>
+</tbody></table>
+<p>硬件覆盖也在扩大：统一的 Ascend Dockerfile 覆盖 A2、A3 和 A5，并新增 AMD ROCm Dockerfile 与安装指南。可用性仍取决于具体配方。VeOmni 后端集成还为 Qwen-Image 和 Qwen3-Omni 提供更多 actor 训练选项。</p>
+<h2>5. 入门与升级说明</h2>
+<p>选择适合模型、任务和硬件的 <a href="https://github.com/verl-project/verl-omni/tree/v0.3.0/examples">v0.3.0 配方</a>，然后按照对应安装说明操作。复用旧 launcher 时，应先检查以下变化：</p>
+<ul>
+<li><strong>Trainer：</strong> V1 已成为默认值（<code>trainer.use_v1=true</code>），旧 V0 已弃用。旧入口必须显式设置 <code>trainer.use_v1=false</code>；如有已迁移配方，应优先采用。</li>
+<li><strong>离线 DPO 仍使用 V0：</strong> 它继续运行于 V0 trainer（<a href="https://github.com/verl-project/verl-omni/pull/650">#650</a>），因此也必须显式设置 <code>trainer.use_v1=false</code>。这包括上表中的 MiniCPM-o 4.5 离线 DPO 配方，而不只是尚未迁移的旧脚本。</li>
+<li><strong>具名扩散媒体产物：</strong> 未标记的扩散 rollout 张量现在会被拒绝（<a href="https://github.com/verl-project/verl-omni/pull/557">#557</a>）。读取旧 raw payload 的自定义 rollout adapter 和 reward client 必须迁移到具名产物协议：<code>media_artifact__&lt;name&gt;</code> 与 <code>metadata.media_artifacts</code>。</li>
+<li><strong>注意力后端采用 fail-closed：</strong> 缺少 FlashAttention 内核时会在启动阶段报错，不再静默回退到 native/SDPA（<a href="https://github.com/verl-project/verl-omni/pull/530">#530</a>）。需要安装缺失的内核依赖，或显式选择受支持的后端。</li>
+<li><strong>依赖：</strong> 使用 vLLM 0.30.0、vLLM-Omni 0.30.0（<code>12e9280</code>）、Python 3.11+、Diffusers 0.40.0+ 和本次发布的 CUDA 13.0+ 软件栈。早期 v0.3.0rc1 的 engine pin 不受支持；Ascend 用户应使用更新后的固定环境。</li>
+<li><strong>Qwen3-Omni launcher：</strong> 使用 <code>verl_omni.trainer.main_omni</code> 与当前配方。旧 <code>verl.trainer.main_ppo</code> launcher 和旧 monkey patch 已移除。</li>
+</ul>
+<p>可查看<a href="https://github.com/verl-project/verl-omni/releases/tag/v0.3.0#breaking-changes">完整迁移细节</a>，选择配方并比较自身工作负载的质量和实际耗时，再通过<a href="https://github.com/verl-project/verl-omni">项目仓库</a>分享结果或贡献。</p>
+<blockquote>
+<p>本文由 Codex 根据 vLLM 英文原文翻译整理；如有歧义，请以原文为准。</p>
+</blockquote>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
