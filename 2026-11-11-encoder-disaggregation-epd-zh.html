@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="vLLM 中的编码器分离：使用 EPD 扩展多模态服务">
+  <title>vLLM 中的编码器分离：使用 EPD 扩展多模态服务</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>vLLM 中的编码器分离：使用 EPD 扩展多模态服务</h1>
+        <p class="original-title">Encoder Disaggregation in vLLM: Scaling Multimodal Serving with EPD</p>
+        <div class="meta">
+          <span>作者：Inferact、InferMatrix 与 IBM</span>
+          <span>发布日期：2026-11-11</span>
+          <a href="https://vllm.ai/blog/2026-11-11-encoder-disaggregation-epd">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>vLLM 中的编码器分离：使用 EPD 扩展多模态服务</h1>
+<p>多模态推理在语言模型执行之前增加了一个编码阶段。图像、视频帧和音频必须先处理为嵌入（embedding），语言模型才能使用它们。这个阶段的负载会随媒体大小、模态和请求组合而变化，而且可能独立于预填充（prefill）和解码（decode）的负载发生改变。</p>
+<p>编码器 / 预填充 / 解码分离（Encoder / Prefill / Decode disaggregation，EPD）把这些阶段拆分为可独立部署的 vLLM 实例。vLLM 社区近期围绕模型执行、远程嵌入传输、共享缓存、多模态输入处理和请求路由，持续扩展 EPD 能力。</p>
+<p>DeepSeek 的<a href="https://github.com/deepseek-ai/DeepInfer/blob/main/doc/inference_deployment_qa.md">推理部署问答</a>描述了把视觉编码器单独部署的 E/P/D 架构。vLLM 自 2025 年 12 月发布<a href="https://vllm.ai/blog/2025-12-15-vllm-epd">架构文章</a>以来一直支持编码器分离，并持续改进。当前 vLLM main 分支还支持 DeepSeek V4.1 Flash 的纯元数据 EPD。</p>
+<p>本文聚焦五项工程改进：</p>
+<ul>
+<li>纯元数据请求：让下游实例使用远程嵌入，而不重复媒体预处理。</li>
+<li>专用编码器执行：独立的 Model Runner V2 路径、仅编码器 CUDA Graph 支持，以及更少的检查点加载 I/O。</li>
+<li>通过 NIXL 和 Mooncake 集成传输远程嵌入。</li>
+<li>通过 Mooncake Store 跨编码器复用输出。</li>
+<li>降低 Python EPD 代理的编排开销，并通过 vLLM Router、SMG 和 llm-d 编排 EPD。</li>
+</ul>
+<p><a href="https://github.com/vllm-project/vllm/issues/52409">EPD 跟踪议题</a>汇总了仍在进行的工作。下文介绍的 vLLM 核心能力（包括 MiMo 和 XPU 支持）已包含在 vLLM v0.32.0 中。DeepSeek V4.1 Flash 的纯元数据支持已通过 <a href="https://github.com/vllm-project/vllm/pull/62802">#62802</a>进入 main。下文的 vLLM Router 和 SMG 集成使用各自的 main 分支。</p>
+<h2>为什么要分离编码器？</h2>
+<p>多模态请求通常经过三个阶段：</p>
+<ol>
+<li><strong>编码器（E）</strong>：预处理媒体并生成多模态嵌入。</li>
+<li><strong>预填充（P）</strong>：处理提示词和多模态嵌入，建立生成所需的状态。</li>
+<li><strong>解码（D）</strong>：使用这些状态生成输出 token。</li>
+</ol>
+<p>EPD 支持两种部署模式：E+PD 将编码器单独部署、预填充和解码合并部署；E/P/D 则把三个阶段全部独立部署。</p>
+<p><img src="assets/2026-11-11-encoder-disaggregation-epd/01-epd-architecture.png" alt="编码器、预填充和解码的部署模式"></p>
+<p><em>图 1：E+PD 将编码与语言模型执行分开；E/P/D 进一步分离预填充和解码。EC 连接器负责传递编码器嵌入，KV 连接器负责在预填充和解码之间传递状态。</em></p>
+<p>图像占比较高的工作负载可能需要增加编码器容量，却不需要同比增加解码容量；输出较长的工作负载则可能相反。拆分这些阶段后，运维人员可以独立调整各阶段的实例数和执行设置，同时把编码器计算从运行语言模型的 GPU 上移走。</p>
+<h2>纯元数据请求：避免重复预处理</h2>
+<p>仅传输嵌入并不足以完成交接。消费者还需要足够的信息来重建多模态输入布局，包括占位符长度、图像网格、特征长度，以及把这些位置与所传嵌入关联起来的标识符。</p>
+<p>一种直接的 EPD 实现会把原始媒体发给编码器，通过 EC 连接器传输所得嵌入，再把原始请求转发给 P/PD。这样可以得到正确结果，但消费者仍可能为了恢复输入布局，再次抓取、解码、缩放、归一化或切分媒体；而这些工作编码器已经做过。</p>
+<p>纯元数据请求会把下游媒体项替换为一个引用，其中包含编码器端已经生成的结构信息。消费者用这些元数据重建占位符，并通过 EC 连接器接收实际嵌入。</p>
+<p>只有多模态媒体项发生变化：文本提示词和生成设置保持不变，嵌入仍沿 EC 数据路径传输。</p>
+<p><img src="assets/2026-11-11-encoder-disaggregation-epd/02-control-and-data.png" alt="路由器转发原始媒体或纯元数据请求，EC 连接器独立传输嵌入"></p>
+<p><em>图 2：路由器/代理把媒体分发给 E，并把请求转发给 P/PD。在纯元数据路径中，E 将布局元数据返回给路由器，由路由器替换下游媒体项；两种路径的嵌入都通过 EC 连接器独立传输。箭头表示逻辑数据流，而非执行时间线。</em></p>
+<p>例如，Qwen 系列图像输入需要 <code>image_grid_thw</code> 等网格信息来构造正确的多模态布局。编码器可以发布它已经计算好的网格，让 P 直接使用。</p>
+<table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>向 P 转发原始媒体</th>
+<th>纯元数据</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>下游媒体项</td>
+<td>图像 URL、base64 数据或其他原始媒体输入</td>
+<td>输入标识以及模型要求的结构元数据</td>
+</tr>
+<tr>
+<td>输入布局重建</td>
+<td>重新处理媒体，或复用已缓存的预处理结果</td>
+<td>根据编码器发布的元数据构造占位符</td>
+</tr>
+<tr>
+<td>嵌入来源</td>
+<td>EC 连接器；若远程嵌入可用，则不再执行编码器前向传播</td>
+<td>EC 连接器</td>
+</tr>
+<tr>
+<td>主要开销或要求</td>
+<td>可能重复抓取、解码和预处理</td>
+<td>元数据契约必须与传输的嵌入及输入布局一致</td>
+</tr>
+</tbody></table>
+<p>没有纯元数据转发时，编码器并不一定执行两次，因为远程嵌入已经覆盖了编码器计算。重复发生在媒体处理环节；转发 URL 还可能让消费者再次抓取媒体。</p>
+<h3>图像、视频与音频的元数据</h3>
+<p>Python EPD 路径已针对受支持模型的图像、视频和音频提供纯元数据转发。三种模态采用相同的交接方式：消费者根据编码器发布的元数据重建输入布局，同时通过 EC 连接器接收嵌入。所需字段因模型和模态而异：</p>
+<ul>
+<li><strong>图像</strong>：<code>image_grid_thw</code> 等图像网格使消费者无需重新处理像素，就能构造视觉占位符范围。</li>
+<li><strong>视频</strong>：前端接受带有布局重建元数据的 <code>video_embeds</code> 引用。对于 Qwen3-VL，这包括 <code>video_grid_thw</code> 和编码器发布的时间戳；这些信息会影响提示词的 token 布局。</li>
+<li><strong>音频</strong>：音频 token 数和所需特征长度使消费者无需重复音频预处理即可重建占位符。</li>
+</ul>
+<p>元数据序列化是另一项独立优化。模型声明的元数据字段现在可以表示为数值 JSON 数组，从而避免为小型结构字段执行 PyTorch 张量序列化和 base64 转换，也让路由器及其他前端获得与编程语言无关的表示方式。</p>
+<p>下面的<a href="https://github.com/vllm-project/vllm/pull/57887">音频评估</a>展示了这种交接方式的收益。音频改动覆盖 Qwen2-Audio、AudioFlamingo3、Ultravox、Qwen2.5-Omni 和 Qwen3-Omni 中相关的纯音频 Chat Completions 路径；实时输入和音视频组合输入不在其范围内。</p>
+<p><img src="assets/2026-11-11-encoder-disaggregation-epd/03-audio-results.png" alt="音频纯元数据路径的吞吐与延迟结果"></p>
+<p><em>图 3：在 MMAU test-mini 上进行纯音频元数据评估：1,000 个样本、两轮运行，模型为 Qwen3-Omni-30B-A3B-Instruct，BF16、TP=1、Model Runner V2、Mooncake TCP、1E+1PD、并发 64，并启用 CUDA Graph。</em></p>
+<p>在这项音频评估中，纯元数据转发把吞吐从 62.21 提升到 73.13 请求/秒，并把平均延迟从 980 ms 降至 853 ms。准确率从 75.90% 变为 75.65%，这项差异仍需进一步调查。这里比较的是 EPD 内部的两条音频输入路径，而不是 EPD 与共置式服务。</p>
+<h2>编码器实例的专用执行路径</h2>
+<p>仅编码器实例不运行语言模型，不维护语言模型 KV 缓存，也不产生采样 token，因此它的执行生命周期应体现这些差异。</p>
+<p>Model Runner V2 通过专用的 <code>MMEncoderModelRunner</code> 隔离仅编码器执行。它不依赖 token 采样来管理 GPU 完成状态，避免编码器工作仍在运行时过早复用缓冲区。</p>
+<p>相关改动让编码器执行更加一致：</p>
+<ul>
+<li><strong>配置规范化</strong>：仅生产方的 EC 实例自动进入仅编码器模式。</li>
+<li><strong>正确的异步执行</strong>：仅编码器步骤跳过 token 采样；不带 EC 连接器、通过 <code>--mm-encoder-only</code> 启动的独立实例也一样。</li>
+<li><strong>减少启动 I/O</strong>：若能安全判断权重布局，仅编码器加载会跳过纯语言模型检查点分片。在一个裁剪后的 Kimi-K3 检查点上，编码器只读取 96 个分片中的 2 个，权重加载时间从 683 秒降至 0.31 秒。</li>
+<li><strong>编码器 CUDA Graph 捕获</strong>：仅编码器 V2 runner 可选择启用 ViT 图捕获，并复用现有的预算选择、重放和 eager 回退机制。</li>
+</ul>
+<h3>GPU 视频处理</h3>
+<p>GPU 预处理和 NVDEC 硬件解码可加速 E 上的媒体处理。在一项 30 帧 <a href="https://github.com/vllm-project/vllm/pull/53675">MMVU 评估</a>中，端到端吞吐在三轮运行中提升约 94%–115%，每轮都使用独立的 4-GPU GB200 节点。每轮采用 Qwen3.5-35B-A3B、1E+3PD 拓扑、共享存储 EC 连接器、eager 执行和并发 64。收益同时来自 GPU 预处理和硬件视频解码；随着编码器加速，PD 层成为瓶颈。</p>
+<h2>远程嵌入传输与故障隔离</h2>
+<p><code>ECExampleConnector</code> 提供共享文件系统路径，可用于验证 EPD。跨节点部署还需要网络传输、目标缓冲区管理和清晰的在途输出所有权。</p>
+<p>目前已有两条远程传输路径：</p>
+<table>
+<thead>
+<tr>
+<th>后端</th>
+<th>能力</th>
+<th>文档</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>NIXL + CPU EC</td>
+<td>通过已注册的 CPU mmap 区域间 NIXL 传输，在实例间共享卸载到 CPU 的编码器输出</td>
+<td><a href="https://docs.vllm.ai/en/latest/features/ec_cpu_connector/">CPU EC 指南</a></td>
+</tr>
+<tr>
+<td>Mooncake EC</td>
+<td>通过 Mooncake TransferEngine 传输编码器输出，支持 TCP 和 RDMA 配置</td>
+<td><a href="https://docs.vllm.ai/en/latest/features/mooncake_ec_connector_usage/">Mooncake EC 指南</a></td>
+</tr>
+</tbody></table>
+<h3>传输形状必须匹配编码器输出</h3>
+<p>传输缓冲区可能需要在媒体项编码之前分配。它的大小无法只根据一个语言模型隐藏维度可靠推断，因为不同模态和模型架构可能产生宽度不同的编码器输出。</p>
+<p>例如，受测 Qwen3-Omni 检查点产生宽度为 8192 的视觉输出（包括 DeepStack 信息），音频输出宽度则为 2048。EC 生产方现在会在初始化时逐模态测量输出宽度，并在传输协议中携带真实形状。NIXL EC 协议版本也已更新，因此生产方和消费者必须同步升级。</p>
+<h3>传输失败应只使受影响请求失败</h3>
+<p>纯元数据请求使故障处理尤其重要。持有原始媒体的消费者也许还能回退到本地编码；只有元数据的消费者却没有这样的输入。</p>
+<p>消费者现在会明确区分这两种情况：如果远程编码无法到达、且本地恢复不可用，它会把受影响请求报告为不可用，而不是采用可能导致 EngineCore 终止的不安全回退路径。资源生命周期修复（包括 NIXL 设置失败后释放共享内存）也进一步改善了故障处理。</p>
+<h2>跨编码器实例复用输出</h2>
+<p>实例本地缓存存在复用缺口。一张由 E0 编码的图像，可能在负载均衡、扩缩容或恢复后被路由到 E1。如果 E1 没有缓存该输出，就可能重复执行另一实例已经完成的编码器前向传播。</p>
+<p>Mooncake Store 支持跨编码器输出复用。本地未命中时，编码器会查询共享 Store；命中后无需再次前向传播即可得到嵌入，未命中则正常编码并异步发布输出。向所选 P 实例的传输仍通过 Mooncake P2P 完成。</p>
+<p><img src="assets/2026-11-11-encoder-disaggregation-epd/04-cross-encoder-cache.png" alt="使用 Mooncake Store 跨编码器复用嵌入"></p>
+<p><em>图 4：Mooncake Store 提供跨编码器共享输出复用；<code>ECMooncakeConnector</code> 保留向所选消费者传输数据的 P2P 路径。</em></p>
+<p>共享复用会校验输入标识、模型标识和输出张量契约。初始支持范围包括图像、Model Runner V2、编码器 TP=1，且不使用动态 LoRA。发布为异步操作，因此并发冷请求仍可能重复计算。配置和受支持组合请参阅<a href="https://docs.vllm.ai/en/latest/features/cross_encoder_cache/">跨编码器复用指南</a>。</p>
+<p>一项<a href="https://github.com/vllm-project/vllm/pull/56242">受控重分配实验</a>使用 6 张 H20 GPU、InternVL3_5-38B-HF、2E+4PD 拓扑和同节点 Mooncake TCP。缓存填充后，实验在编码器之间重新分配图像，主动制造本地未命中。在包含 512 张图像的 128 个测量请求中，共享复用把重复图像编码次数从 512 降到 0。TTFT p50 从 1.209 秒降至 0.819 秒，p90 从 1.656 秒降至 0.891 秒，TPOT 基本不变。</p>
+<p>这只是一次让所有图像都发生重分配的运行，展示的是共享复用的最佳情况。生产环境中的收益取决于输出复用频率，也要计入 Store 的内存和 I/O 成本。</p>
+<h2>EPD 编排与路由</h2>
+<p>各计算阶段独立扩缩容，需要能够跟上速度的编排路径。随着编码加速或缓存命中直接省去编码，分发媒体、收集编码器元数据和转发请求本身可能成为瓶颈。</p>
+<p>纯元数据请求减少了下游媒体流量，JSON 元数据则避免为结构字段序列化张量。<a href="https://github.com/vllm-project/vllm/pull/56657">Python EPD 代理</a>通过更快的 JSON 编解码进一步降低 CPU 开销，并直接转发最终响应字节（包括流式响应），无需先解码再重新编码。</p>
+<h3>vLLM Router 中的 EPD 编排</h3>
+<p><a href="https://github.com/vllm-project/router">vLLM Router</a>支持 HTTP E+PD 和 E/P/D 部署、纯元数据转发、把多张图像分配到多个编码器，以及数据并行 P/PD 消费者。编码器数和消费者数可以独立配置。支持的 EC 后端包括 Mooncake、NIXL 和共享文件系统示例连接器。使用静态 worker 的原生 CLI 配置请参阅 <a href="https://github.com/vllm-project/router/blob/main/docs/epd.md">Router EPD 指南</a>。</p>
+<h3>SMG 中的 EPD 编排</h3>
+<p><a href="https://github.com/smg-project/smg">SMG</a>通过 gRPC 支持 vLLM E/P/D 部署，包括纯元数据转发、编码器端媒体预处理，以及 Mooncake 和 NIXL EC 后端。它同时支持 Python 和 Rust servicer，还能把一个纯图像请求中的多张图像分配给多个 E worker，并将分配到同一编码器的图像批处理。</p>
+<h3>llm-d 中的 EPD 编排</h3>
+<p><a href="https://llm-d.ai/">llm-d</a>按照其<a href="https://github.com/llm-d/llm-d/tree/main/guides/multimodal-serving">多模态服务指南</a>，在 Kubernetes 上运行采用 E+PD 或 E/P/D 布局的 vLLM EPD。每个角色都是独立的 Pod 层，因此编码器可以独立于预填充和解码扩缩容，并使用不同硬件。llm-d Router（Endpoint Picker，EPP）选择编码器 Pod，路由 sidecar 或 <a href="https://github.com/llm-d/llm-d/tree/main/guides/coord-disaggregation">Coordinator</a>则把编码请求分发给它们，以并行处理多张图像。嵌入通过基于 NIXL 的 EC 连接器到达消费者，纯文本请求则跳过编码。</p>
+<p>llm-d 团队与 vLLM 社区合作，提供了经过验证的 Kubernetes 原生 EPD 部署路径。有关架构以及何时需要把编码阶段单独部署，请参阅 llm-d 的<a href="https://llm-d.ai/blog/serving-multimodal-at-scale-in-llm-d#when-the-encode-stage-needs-its-own-hardware">多模态服务文章</a>。</p>
+<h2>DeepSeek V4.1 Flash：EPD 实践</h2>
+<p>我们在 GB200 上使用 DeepSeek V4.1 Flash 和 512 个 MP-DocVQA 验证问题，对比了 PD 与 EPD 服务。每个问题包含 4–6 页原始文档；请求平均有 4,905 个输入 token 和 5.2 个输出 token。每个并发等级运行三次，并启用缓存和 CUDA Graph。</p>
+<p>PD 基线为 P 使用 4 张 GPU、D 使用 4 张 GPU。EPD 保持相同的 P/D 配置，并增加 4 个单 GPU 编码器实例：TP=1、DP=4、专家并行，以及跨 DP rank 分片并驻留 GPU 的 Engram 表（DEP4）。EPD 使用 Mooncake GPU RDMA 传输嵌入；两种部署都使用 NIXL 传输 KV。两者均运行 main 分支的 <code>5314c58281</code>，并加入 <a href="https://github.com/vllm-project/vllm/pull/62802">DeepSeek 纯元数据扩展</a>。</p>
+<p><img src="assets/2026-11-11-encoder-disaggregation-epd/05-deepseek-v41-epd.png" alt="DeepSeek V4.1 Flash 的每 GPU 吞吐与 P90 首 token 时间：PD 与 EPD 对比"></p>
+<p><em>图 5：吞吐越高越好，P90 TTFT 越低越好。C 表示客户端并发量。吞吐为输入与输出 token 总数除以运行时间及全部已部署 GPU 数：PD 为 8 张，EPD 为 12 张（包括 4 张编码器 GPU）。各点汇总三轮数据；每个并发等级的 P90 汇总全部 1,536 个请求。<a href="https://vllm.ai/assets/figures/2026-10-18-encoder-disaggregation-epd/05-deepseek-v41-epd.csv">绘图数据</a>。</em></p>
+<p>在并发 64–128 时，计入 EPD 的全部 12 张 GPU（包括编码器）后，EPD 的每 GPU 输入加输出吞吐仍比 8-GPU PD 基线高 6.6%–9.5%，P90 TTFT 则低 44%–47%。但在并发 16 时，EPD 的每 GPU 吞吐更低；并发 32 时大致持平。收益取决于负载和资源分配，而不只是把阶段拆开。</p>
+<h2>开始使用</h2>
+<p>建议先从 E+PD 开始，在加入独立解码层之前验证编码器到消费者的交接。<a href="https://docs.vllm.ai/en/latest/features/disagg_encoder/">编码器分离指南</a>列出了示例部署和集成测试。</p>
+<p>准备兼容的 vLLM checkout、安装 Mooncake 并提供两张 GPU 后，可运行以下集成脚本执行基线，并与分离部署的输出比较：</p>
+<pre><code class="language-bash">GPU_E=0 GPU_PD=1 MOONCAKE_EC_PROTOCOL=tcp \
+  bash tests/v1/ec_connector/integration/run_epd_mooncake_ec_full_pipeline.sh
+</code></pre>
+<p>传输依赖和消费者控制地址配置请参阅 <a href="https://docs.vllm.ai/en/latest/features/mooncake_ec_connector_usage/">Mooncake EC 指南</a>；CPU 卸载和基于 NIXL 的共享请参阅 <a href="https://docs.vllm.ai/en/latest/features/ec_cpu_connector/">CPU EC 指南</a>。应根据目标媒体组合、缓存行为和延迟要求选择 E/PD 资源配比。</p>
+<h2>后续工作</h2>
+<p>近期工作已把 EPD 扩展到核心执行与传输路径之外。MiMo-V2-Omni 现在会声明图像 EPD 所需的嵌入字段；XPU 支持则包括 EC 集成和仅编码器生产方 runner。</p>
+<p>后续方向包括可观测性、更多传输与缓存后端、前端集成，以及更清晰的上游错误传播。运维人员需要区分计算嵌入、加载缓存输出和远程传输各自花费的时间。</p>
+<p>另一个机会是协调编码器工作与预填充侧复用。在 E 优先流水线中，P 发现其 KV 缓存已覆盖某次多模态出现、或本地已有可复用嵌入之前，编码可能已经开始。一项正在进行的<a href="https://github.com/vllm-project/vllm/issues/55639">设计讨论</a>研究如何让 P 的实际需求抑制不必要的上游工作。设计需要在节省计算与传输，以及额外查询、协调和冷请求延迟之间取得平衡。</p>
+<p>如果你对 EPD 有疑问或希望参与，请加入 vLLM Slack 的 <a href="https://vllm-dev.slack.com/archives/C0CAPN6GGBV">EPD / EC-connector 频道</a>，讨论使用场景、分享反馈并参与协作。</p>
+<h2>致谢</h2>
+<p>感谢以下贡献者的工作和反馈：</p>
+<ul>
+<li><a href="https://inferact.ai/">Inferact</a>：Tianyu Guo、Zifeng Mo、Siyu Liu、Roger Wang</li>
+<li><a href="https://infermatrix.si/">InferMatrix 团队</a>：Ziheng Zhou、Chenzhou Jiang、Ruixin Li、Hang Wu、Chenguang Zheng、Haozhao Dai、Hongsheng Liu</li>
+<li><a href="https://www.ibm.com/">IBM</a>：Omer Paz、Or Ozeri、Danny Harnik</li>
+</ul>
+<h2>相关资源</h2>
+<ul>
+<li><a href="https://vllm.ai/blog/2025-12-15-vllm-epd">用于可扩展多模态模型服务的编码器分离</a>：最初的架构和动机。</li>
+<li><a href="https://docs.vllm.ai/en/latest/features/disagg_encoder/">编码器分离文档</a>：部署示例和配置。</li>
+<li><a href="https://github.com/vllm-project/vllm/issues/52409">EPD 跟踪议题</a>：持续进行的实现工作。</li>
+</ul>
+<hr>
+<p>原文：<a href="https://vllm.ai/blog/2026-11-11-encoder-disaggregation-epd">Encoder Disaggregation in vLLM: Scaling Multimodal Serving with EPD</a></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

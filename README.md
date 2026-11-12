@@ -10,6 +10,7 @@ AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](a
 
 ## 文章
 
+- [vLLM 中的编码器分离：使用 EPD 扩展多模态服务](2026-11-11-encoder-disaggregation-epd-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-11-encoder-disaggregation-epd)）
 - [VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练](2026-11-06-verl-omni-v0-3-0-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-verl-omni-v0-3-0)）
 - [将 vLLM 迁移到 LibTorch 稳定 ABI](2026-11-06-stable-abi-cuda-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-stable-abi-cuda)）
 - [零不匹配与简单异步强化学习：REINFORCE Zero、DeepSeek-V4.1 和 Kimi K3.1](2026-11-06-zero-mismatch-async-rl-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-zero-mismatch-async-rl)）
