@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="H3-Image 首日支持：Vera Rubin 上 0.87 秒生成 4K 图像">
+  <title>H3-Image 首日支持：Vera Rubin 上 0.87 秒生成 4K 图像</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>H3-Image 首日支持：Vera Rubin 上 0.87 秒生成 4K 图像</h1>
+        <p class="original-title">H3-Image Day-0 Support: 4K in 0.87s with Vera Rubin</p>
+        <div class="meta">
+          <span>作者：vLLM-Omni 团队</span>
+          <span>发布日期：2026-11-12</span>
+          <a href="https://vllm.ai/blog/2026-11-12-minimax-h3-image-rubin">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>H3-Image 首日支持：Vera Rubin 上 0.87 秒生成 4K 图像</h1>
+<p><img src="assets/2026-11-12-minimax-h3-image-rubin/social-preview-compact.png" alt="vLLM-Omni 与 MiniMax H3-Image"></p>
+<p>我们使用 vLLM-Omni 将 <a href="https://huggingface.co/MiniMaxAI/MiniMax-H3-Image">MiniMax H3-Image</a>带到 <strong>NVIDIA Vera Rubin</strong>。在 4 张 GPU 上，原生 4096×4096 图像在短提示词服务基准中的中位生成时间达到 <strong>0.87 秒</strong>。另一套吞吐配置可达到 <strong>每小时 6,115 张图像</strong>，折算为 <strong>每天 146,755 张</strong>。</p>
+<p>若采用 MiniMax 官方 <a href="https://platform.minimax.io/docs/pricing/overview">Standard 4K API 定价示例</a>中的每张 <strong>0.06879 美元</strong>，并把发布折扣前价格视为假设销售价格，峰值吞吐对应的毛收入为满计费利用率下 <strong>每 GPU 每小时 105.16 美元</strong>，或 75% 利用率下 <strong>每 GPU 每小时 78.87 美元</strong>。这些估算未扣除运营成本；每日容量是根据实测速率外推所得。</p>
+<p>H3-Image 是支持文本生成图像和图像编辑的开放权重模型。一个检查点即可处理两种任务，只需 6 个采样步骤，无需超分辨率模型即可原生生成高分辨率图像，并支持最多 16 张参考图。</p>
+<p>我们让 H3-Image 覆盖<strong>消费级和数据中心 GPU</strong>，包括 <strong>NVIDIA、AMD、Intel 和 Moore Threads（MUSA）</strong>，同时支持 <strong>Huawei Ascend NPU</strong>。</p>
+<ul>
+<li><strong>单 GPU 与多 GPU 服务。</strong> 可以在单张 RTX GPU 上运行，也可在多张数据中心 GPU 上分布式生成，并针对不同显存容量选择配置。</li>
+<li><strong>覆盖 10 种 NVIDIA 硬件的实测。</strong> 对比文本生成图像与编辑任务在不同输出分辨率、参考图数量下的延迟。</li>
+</ul>
+<h2>质量</h2>
+<p>油画笔触、多视角相机设计图、日文海报字样和米粒上的微小文字，能够直观展示缩小图像会损失哪些细节；游戏环境则展示风化石材和反射光。每组比较都以一张 H3-Image 生成的 <strong>4K</strong> 图像为源，保持宽高比缩放到 <strong>1K</strong> 和 <strong>2K</strong>，从而固定构图。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-resolution-detail.html" title="H3-Image 在 1K、2K、4K 下的纹理和细节同步缩放比较" loading="lazy" scrolling="no" style="display:block;width:100%;height:850px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-resolution-detail.html">单独打开分辨率细节交互页</a></p>
+<p><img src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-resolution-detail-fallback.png" alt="分辨率细节交互静态备用图"></p>
+<h2>性能</h2>
+<p>两种 API 模式很直接：<strong>Text-to-Image</strong> 接收提示词；<strong>Image Edit</strong> 接收提示词及一张或多张参考图。主要比较使用 **2K（2048×2048）**与 **4K（4096×4096）**输出，每次请求返回一张图像。所有机器使用固定提示词和参考文件。请求参数见 MiniMax <a href="https://platform.minimax.io/docs/guides/image-generation">API 指南</a>。</p>
+<p>在下方交互图中可选择 <strong>Text-to-image</strong> 或 <strong>Image Edit</strong>。编辑模式支持选择 <strong>1、2、4、8 或 16 张参考图</strong>；输出尺寸反映实际测量场景。</p>
+<p>对于 <strong>4K 文本生成图像</strong>，4 张 GB300 平均耗时 <strong>1.48 秒</strong>；使用一张参考图的 <strong>4K 图像编辑</strong>平均耗时 <strong>1.77 秒</strong>。一张 RTX 5090 使用 CPU 逐层卸载时，同类请求分别耗时 <strong>52.29 秒</strong>和 <strong>61.45 秒</strong>。每项计时均包含完整 PNG 响应。</p>
+<p>对于 <strong>2K 文本生成图像</strong>，单张 H200 在 BF16、权重常驻条件下平均耗时 <strong>1.49 秒</strong>。</p>
+<p>对于这里使用的详细咖啡产品提示词，Rubin 生成 4K 图像平均耗时 <strong>1.09 秒</strong>。标题中的 <strong>0.87 秒</strong>来自后文“Rubin 启动优化”中的另一项短提示词服务基准，而非这项请求。两者都使用 4 张 GPU、SP4 和 MXFP8，但请求语料、HTTP 客户端和汇总统计量不同。</p>
+<p>每条结果都会显示 GPU 数量。“Test setup”列出 GPU 型号、每张 GPU 的 CUDA 可见显存、互连、功耗上限和服务配置。由于 GPU 数量、精度和内存放置方式不同，这些数字比较的是完整部署系统，而不是单独隔离 GPU 架构。1K 测试返回 1024×1024 图像；由于本地模型的默认最小画布，它们会先以 2048×2048 生成再缩小，因此不能代表原生 1K 扩散计算。部分 1K 和 2K 运行还使用不同的分配器设置，详见 Test setup。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-workload-hardware.html" title="H3-Image 在不同硬件上的文本生成图像与编辑性能" loading="lazy" scrolling="no" style="display:block;width:100%;height:1250px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-workload-hardware.html">单独打开工作负载与硬件交互页</a></p>
+<p><img src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-workload-hardware-fallback.png" alt="工作负载与硬件交互静态备用图"></p>
+<p><a href="assets/2026-11-12-minimax-h3-image-rubin/api-workload-results.csv">基准数据</a>。柱状图显示预热后三个种子的平均值，误差范围为最小值到最大值；配置、计时范围和 10 分钟请求上限记录在 Test setup 中。</p>
+<h2>推理优化</h2>
+<p>H3-Image 由 <strong>Qwen3-VL 编码器</strong>、<strong>33.1B 稠密 DiT</strong> 和图像 VAE 组成。原生 4096×4096 输出会在 6 个去噪步骤中产生 <strong>16,384 个目标图像 token</strong>，然后才进行 VAE 解码。参考图还会增加编码工作和条件 token。因此我们有三个实际优化目标：DiT 计算、解码开销和模型内存。架构详情见<a href="https://huggingface.co/MiniMaxAI/MiniMax-H3-Image#model-architecture">模型说明</a>。</p>
+<h3>更快的 DiT</h3>
+<p>在 Blackwell 和 Rubin 上，<strong>MXFP8 GEMM</strong> 加速适用的 DiT 线性层，同时减少权重占用。<strong>Ulysses SP4</strong> 将序列计算分布到 4 张 GPU；DiT TP1 则保持权重复制。<strong>AdaLN 缓存</strong>在输入和权重一致时复用完全相同的条件投影。6 个去噪步骤仍全部执行。编码器和 VAE 保持配置精度；Hopper 与 Ampere 使用 BF16。</p>
+<h3>更快的解码</h3>
+<p>VAE 会独立解码图像 tile。我们把 tile 分配到多个 GPU，然后在每张 GPU 上结合 <strong>CUDA Graph 重放和多 CUDA stream</strong>：Graph 重放减少重复启动开销，多 stream 让多个 tile 重叠执行。</p>
+<p>4 张 GB300 上的独立 BF16 对照说明了这项优化的效果：VAE 解码从 <strong>2.635 秒降至 0.213 秒</strong>，端到端延迟由约 <strong>4.0 秒降至 1.6 秒</strong>，即加速 <strong>2.5 倍</strong>。两条路径都已经把 tile 分布到 4 张 GPU；这里测量的是 Graph 加多 stream 的综合收益。</p>
+<h3>适配更小的 GPU</h3>
+<p><strong>逐层 CPU 卸载</strong>用权重传输时间换取 GPU 内存。RTX 5090 和 RTX 5080 会卸载 DiT 与文本编码器，并以 eager 模式解码 VAE；RTX 6000D 与 RTX PRO 6000 让 DiT 常驻、卸载编码器，并使用 VAE CUDA Graph。这使单 GPU 部署成为可能，也解释了它与权重常驻数据中心配置之间的部分延迟差距。</p>
+<h2>Rubin 启动优化</h2>
+<p>我们的起点是 vLLM-Omni 的 H3-Image 实现和 <a href="https://vllm.ai/blog/2026-10-09-vera-rubin-preview">vLLM Rubin 支持</a>，运行时为 CUDA 13.4。H3-Image 在此基础上增加稠密扩散工作负载：原生 4096×4096 图像在 6 个去噪步骤中产生 16,384 个目标图像 token，之后执行 VAE 解码。我们测试了这条路径如何把 Rubin 的能力转化为交互延迟和服务吞吐。</p>
+<p>本次运行做了两项改动：</p>
+<ul>
+<li><strong>MXFP8 集成。</strong> 将 Omni 的扩散线性层连接到 vLLM 的在线 MXFP8 加载和内核选择。Rubin 上适用的 DiT 线性层使用 <strong>FlashInfer CuTe-DSL MXFP8 GEMM</strong>；注意力使用 <strong><code>TRTLLM_ATTN</code></strong>。这些都是现有库内核。文本编码器和 VAE 保持原生精度。</li>
+<li><strong>可靠的 4K 输出。</strong> 重复 4K 请求暴露了输出传输路径中的停滞。我们在传输解码后的 uint8 张量之后，把最终图像布局转换移到 CPU。回归检查确认重复请求都能完成，解码像素保持不变。</li>
+</ul>
+<p>随后，我们使用现有 VAE CUDA Graph 和 AdaLN 缓存路径比较 SP4、SP2×DP2 和 SP1×DP4。4 张 GPU 采用 SP4 时达到 <strong>0.87 秒响应</strong>；采用 4 个副本时达到 <strong>每小时 6,115 张图像</strong>。测试固定为原生 4K 文本生成图像、无参考图、6 个步骤和 MXFP8 DiT 线性层；每个并发点使用独立的 160 请求提示词-种子语料：20 条长度 122–160 字符的短提示词，各配 8 个种子。前文跨硬件咖啡产品请求使用 1,292 字符提示词，并报告三个种子的平均值。</p>
+<h3>延迟</h3>
+<p>SP4、并发 1 时，中位延迟为 <strong>0.866 秒</strong>（p95 为 <strong>0.944 秒</strong>），比 GB200 快 <strong>2.21 倍</strong>，比 GB300 快 <strong>1.64 倍</strong>。三个延迟配置均使用 4 张 GPU、SP4 和 MXFP8。</p>
+<h3>吞吐</h3>
+<p>4 个单 GPU 副本（<strong>SP1×DP4</strong>）在并发 8 时达到 <strong>每小时 6,115 张图像</strong>，中位延迟 <strong>4.411 秒</strong>。SP4 在并发 2 时达到 <strong>每小时 4,407 张图像</strong>，中位延迟 <strong>1.421 秒</strong>。副本带来 <strong>38.7% 的吞吐提升</strong>；亚秒延迟与峰值吞吐是两个不同运行点。</p>
+<p>固定使用 SP4 跨平台比较时，Rubin 的峰值吞吐为 GB200 的 <strong>2.20 倍</strong>、GB300 的 <strong>1.60 倍</strong>。每个绘图点包含 160 个预热后的请求；副本独立处理图像，并未把它们合并为一个 DiT batch。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-performance-benchmarks.html" title="MiniMax H3-Image：每 GPU 吞吐与响应延迟" loading="lazy" style="display:block;width:100%;height:720px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-performance-benchmarks.html">单独打开性能基准交互页</a></p>
+<p><img src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-performance-benchmarks-fallback.png" alt="性能基准交互静态备用图"></p>
+<h3>经济性</h3>
+<p><strong>每小时 6,115 张图像</strong>对应每套 4-GPU Rubin 系统每天约 <strong>146,755 张 4K 图像</strong>。我们采用 MiniMax 官方 API 定价示例中 Standard 4K 文本生成图像、无参考图、发布折扣前的<strong>每张 0.06879 美元</strong>。在这一假设售价下，满计费利用率的预计毛收入为 <strong>每 GPU 每小时 105.16 美元</strong>，75% 利用率下为 <strong>每 GPU 每小时 78.87 美元</strong>。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-serving-economics.html" title="四 GPU 系统的延迟、每小时吞吐和毛收入" loading="lazy" scrolling="no" style="display:block;width:100%;height:720px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-serving-economics.html">单独打开服务经济性交互页</a></p>
+<p><img src="assets/2026-11-12-minimax-h3-image-rubin/minimax-h3-image-serving-economics-fallback.png" alt="服务经济性交互静态备用图"></p>
+<p>收入 = 每小时图像数 × 每张价格 × 计费利用率 ÷ 4 张 GPU。实际托管 API 费用会随文本 token 用量变化。收入数字未扣除运营成本；每日容量是根据实测速率外推，而非来自 24 小时压力测试。</p>
+<h2>其他硬件</h2>
+<p>H3-Image 还通过以下实现和配方支持 <strong>AMD Instinct、Intel Arc Pro、Huawei Ascend 和 Moore Threads</strong>。这些社区验证采用各自的工作负载和配置；前文匹配的性能数据只覆盖我们的 NVIDIA 测试。</p>
+<p><strong>AMD Instinct。</strong> <a href="https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Image-AMD.md">AMD 配方</a>包含 MI325X 和 MI350X 上 1–8 张 GPU 的文本生成图像与编辑测量，使用 BF16 和 <code>FLASH_ATTN</code>，并覆盖 Ulysses 序列并行和张量并行。ROCm 使用单个 VAE Graph 副本，以避免并发 Graph 重放时观察到的挂起。</p>
+<p><strong>Intel Arc Pro B70。</strong> <a href="https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Image-XPU.md">XPU 配方</a>记录 1、2、4 张 GPU 的实测部署。推荐的 4 卡布局使用 <strong>DiT TP4 + 文本编码器逐层卸载</strong>，以适配 32 GB 显存。更小布局还会卸载 DiT 权重；VAE 在 XPU 上以 eager 模式解码。</p>
+<p><strong>Huawei Ascend。</strong> <a href="https://github.com/vllm-project/vllm-omni/blob/main/recipes/MiniMaxAI/MiniMax-H3-Image-NPU.md">NPU 配方</a>覆盖 <strong>Atlas 800I A2、Atlas 800T A3 和 Atlas 350（A5）</strong>。A2 和 A5 的实测配置使用 1、2 或 4 张 NPU、BF16 和 eager 执行。4-NPU 配置在 A2 上使用 <strong>DiT TP4</strong>，在 A5 上使用 <strong>Ulysses SP4 + 文本编码器 TP4</strong>；更小配置使用逐层卸载。</p>
+<p><strong>Moore Threads MTT S5000。</strong> H3-Image 通过 <a href="https://github.com/vllm-project/vllm-omni/pull/10139">MUSA 实现</a>获得支持，该实现启用 VAE Graph 解码，并提供<a href="https://github.com/vllm-project/vllm-omni/blob/5b757b77c05db3562239b19707f059d282de7a62/recipes/MiniMaxAI/MiniMax-H3-Image-MUSA.md">模型专用配方</a>，记录 80 GB S5000 卡上的 <strong>TP2 和 TP4</strong> 布局。Graph 测试会检查与 eager 解码逐位一致。</p>
+<h2>OpenDirector</h2>
+<p><a href="https://github.com/ThinkFlowLab/OpenDirector">OpenDirector</a> 是由 vLLM-Omni 提交者发起、面向创作者的智能体平台，目标是让 vLLM-Omni 更容易用于创意工作流。</p>
+<p>其 H3-Image 首日集成目前使用 <strong>MiniMax 托管图像 API</strong>。创作者可以通过画布或智能体生成和编辑图像，并把输出作为下一次编辑的参考。我们计划扩展对<strong>由 vLLM-Omni 驱动、本地部署的 H3-Image 工作流</strong>的支持。</p>
+<h2>致谢</h2>
+<p>感谢 MiniMax 发布 H3-Image 及其模型权重；感谢 NVIDIA 团队和 vLLM 社区对 Vera Rubin 支持的投入；也感谢 vLLM-Omni 和 FlashInfer 贡献者提供本文所用的服务与内核基础设施。</p>
+<p>同时感谢 OpenDirector 贡献者为创意工作流中的 H3-Image 集成所做的工作。</p>
+<hr>
+<p>原文：<a href="https://vllm.ai/blog/2026-11-12-minimax-h3-image-rubin">H3-Image Day-0 Support: 4K in 0.87s with Vera Rubin</a></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

@@ -10,6 +10,9 @@ AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](a
 
 ## 文章
 
+- [Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍](2026-11-12-deepseek-v41-flash-vera-rubin-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-deepseek-v41-flash-vera-rubin)）
+- [Inkling 2 Small 登陆 vLLM：首日支持](2026-11-12-inkling2-small-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-inkling2-small)）
+- [H3-Image 首日支持：Vera Rubin 上 0.87 秒生成 4K 图像](2026-11-12-minimax-h3-image-rubin-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-minimax-h3-image-rubin)）
 - [vLLM 中的编码器分离：使用 EPD 扩展多模态服务](2026-11-11-encoder-disaggregation-epd-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-11-encoder-disaggregation-epd)）
 - [VeRL-Omni v0.3.0：异步训练与更广泛的多模态后训练](2026-11-06-verl-omni-v0-3-0-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-verl-omni-v0-3-0)）
 - [将 vLLM 迁移到 LibTorch 稳定 ABI](2026-11-06-stable-abi-cuda-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-06-stable-abi-cuda)）

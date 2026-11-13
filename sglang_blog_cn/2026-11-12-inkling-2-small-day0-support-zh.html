@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="SGLang 与 Miles 为 Inkling 2 Small 提供首日支持">
+  <title>SGLang 与 Miles 为 Inkling 2 Small 提供首日支持</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">SGLang Blog · 中文翻译</div>
+        <h1>SGLang 与 Miles 为 Inkling 2 Small 提供首日支持</h1>
+        <p class="original-title">SGLang and Miles Add Day-0 Support for Inkling 2 Small</p>
+        <div class="meta">
+          <span>作者：SGLang 团队</span>
+          <span>发布日期：2026-11-12</span>
+          <a href="https://www.sglang.io/blog/inkling-2-small-day0-support">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>SGLang 与 Miles 为 Inkling 2 Small 提供首日支持</h1>
+<p>SGLang 为 Inkling 2 Small 开放权重版本提供首日推理支持，Miles 同步提供强化学习支持。</p>
+<iframe src="assets/2026-11-12-inkling-2-small-day0-support/interactive-throughput.html" title="Inkling 2 Small 在 GB300 与 VR200 上的解码吞吐交互图" loading="lazy" style="display:block;width:100%;height:650px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-inkling-2-small-day0-support/interactive-throughput.html">单独打开解码吞吐交互图</a></p>
+<p><img src="assets/2026-11-12-inkling-2-small-day0-support/interactive-throughput-fallback.png" alt="解码吞吐交互图静态备用图"></p>
+<p><em>Inkling 2 Small，GB300 与 VR200 各 4 张 GPU；随机 8K 输入 / 1K 输出；DSpark + MegaMoE；TP4 / EP4。该图支持在 GB300 与 VR200 两组数据间切换。</em></p>
+<h2>概览</h2>
+<p>Thinking Machines Lab 已发布 Inkling 2 Small 的开放权重。这是一个混合专家模型，总参数量 594B、激活参数量 17B，面向智能体编程、视觉推理和知识工作，可接收文本与图像，并支持 100 万 token 上下文窗口。SGLang 与 Miles 为所发布权重提供首日服务和强化学习支持。</p>
+<p><a href="https://huggingface.co/thinkingmachines/Inkling-2-Small">模型权重</a> · <a href="https://huggingface.co/thinkingmachines/Inkling-2-Small-MXFP8">MXFP8 权重</a> · <a href="https://thinkingmachines.ai/model-card/inkling-2-small/">模型卡</a> · <a href="https://thinkingmachines.ai/news/inkling-2-small/">Thinking Machines Lab 公告</a></p>
+<h2>相比 Inkling-Small 的变化</h2>
+<p>Inkling 2 Small 在保留混合局部与全局注意力和 100 万 token 上下文窗口的同时，加入块注意力残差（Block Attention Residuals）。下表对比上一代 <a href="https://thinkingmachines.ai/model-card/inkling-small/">Inkling-Small</a>：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>Inkling-Small</th>
+<th>Inkling 2 Small</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>参数量</td>
+<td>总参数 276B；激活参数 12B</td>
+<td>总参数 594B；激活参数 17B</td>
+</tr>
+<tr>
+<td>上下文窗口</td>
+<td>100 万 token</td>
+<td>100 万 token</td>
+</tr>
+<tr>
+<td>模态</td>
+<td>文本、图像和音频输入；文本输出</td>
+<td>文本和图像输入；文本输出</td>
+</tr>
+<tr>
+<td>注意力</td>
+<td>混合局部与全局注意力</td>
+<td>混合局部与全局注意力；块注意力残差</td>
+</tr>
+</tbody></table>
+<h2>SGLang 首日支持</h2>
+<p><a href="https://github.com/sgl-project/sglang">SGLang</a> 从首日起就在 NVIDIA、AMD 和 Google 硬件上支持 Inkling 2 Small。它可以服务两种已发布检查点：混合 NVFP4 / MXFP8 检查点与纯 MXFP8 检查点，并支持 DSpark 推测解码、前缀缓存、HiCache、统一内存池、图像输入和原生 TML 渲染。</p>
+<h3>功能</h3>
+<table>
+<thead>
+<tr>
+<th>功能</th>
+<th>状态</th>
+<th>覆盖范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>API</td>
+<td>是</td>
+<td>Chat Completions、Responses 和 Anthropic Messages；原生 TML 渲染、工具调用和流式传输</td>
+</tr>
+<tr>
+<td>视觉</td>
+<td>是</td>
+<td>图像输入，包括视觉输入配合工具使用</td>
+</tr>
+<tr>
+<td>量化</td>
+<td>是</td>
+<td>混合 NVFP4 / MXFP8 检查点和 MXFP8 检查点</td>
+</tr>
+<tr>
+<td>并行</td>
+<td>是</td>
+<td>张量并行和专家并行</td>
+</tr>
+<tr>
+<td>推测解码</td>
+<td>是</td>
+<td>DSpark，使用随模型提供的 MTP head</td>
+</tr>
+<tr>
+<td>Unified Radix Cache</td>
+<td>是</td>
+<td>混合注意力的前缀缓存</td>
+</tr>
+<tr>
+<td>HiCache</td>
+<td>是</td>
+<td>L2 主机内存和 L3 Mooncake 存储，与推测解码兼容</td>
+</tr>
+<tr>
+<td>统一内存</td>
+<td>是</td>
+<td>面向混合注意力的统一内存池</td>
+</tr>
+<tr>
+<td>MXFP8 KV Cache</td>
+<td>是</td>
+<td>Blackwell 上的块缩放 MXFP8 KV 缓存</td>
+</tr>
+</tbody></table>
+<h3>性能</h3>
+<p>我们在每个平台各 4 张 GPU 上测量 Inkling 2 Small 的 SGLang 解码吞吐，使用张量并行和专家并行（TP4 / EP4），随机 8K-token 输入和 1K-token 输出。batch 192 时，VR200 达到每 GPU <strong>5,895 个解码 token/s</strong>、单用户 <strong>123 token/s</strong>；GB300 达到每 GPU <strong>3,642 个解码 token/s</strong>、单用户 <strong>76 token/s</strong>。上方交互图展示两个平台从 batch 1 到 192 的结果。这些是仅解码测量，DSpark 接受长度模拟为每步 3.5 个 token。</p>
+<p>这些结果建立在 DSpark 推测解码和以下内核工作之上：</p>
+<ul>
+<li><strong>MegaMoE：</strong> 我们把 DeepGEMM 的持久化 MoE 内核扩展到 Inkling 2 Small，使每层一个内核即可覆盖模型权重布局中的 NVFP4 和 MXFP8 专家。与 grouped-GEMM 路径相比，batch 64 时，首 token 时间（TTFT）缩短 20%–27%，DSpark 每 token 解码时间缩短 17%。</li>
+<li><strong>解码注意力：</strong> 专用相对偏置解码内核替代 FA4。它把 KV 缓存拆分到最多 64 个 CTA，因此即便只有一个请求也能填满 GPU，并读取紧凑的距离索引偏置表。batch 1 时，每层注意力由 25 µs 降到 9 µs。</li>
+<li><strong>内核融合：</strong> 注意力之前的所有操作融合为一个 prologue 内核；路由器的 sigmoid、偏置和 top-k 融合为另一个内核。量化折叠进专家 GEMM，几乎每次启动都使用程序化依赖启动（PDL）。</li>
+</ul>
+<h3>硬件</h3>
+<p>部署配方覆盖 NVIDIA Blackwell（B300、GB300、B200、GB200）、NVIDIA Vera Rubin（VR200）、NVIDIA Hopper（H200）、AMD Instinct（MI350X、MI355X）和 Google TPU（TPU v7x），对应 Docker 镜像如下：</p>
+<ul>
+<li>NVIDIA Blackwell 与 Hopper：<code>lmsysorg/sglang:dev-inkling-2-small</code></li>
+<li>NVIDIA Vera Rubin：<code>lmsysorg/sglang:dev-inkling-2-small-cu134</code></li>
+<li>AMD Instinct：<code>lmsysorg/sglang:dev-inkling-2-small-mi35x</code></li>
+<li>Google TPU：<code>lmsysorg/sglang:dev-inkling-2-small-tpu</code></li>
+</ul>
+<p>启动配方见 <a href="https://docs.sglang.io/cookbook/autoregressive/ThinkingMachines/Inkling-2-Small">SGLang Cookbook</a>。如有问题，可加入 <a href="https://slack.sglang.io/">SGLang Slack</a>。</p>
+<h2>Miles 首日支持</h2>
+<p><a href="https://miles.radixark.com/">Miles</a> 将 Megatron 训练器与 SGLang rollout 结合，为 Inkling 2 Small 提供训练能力。它支持文本和图像提示词上的全参数训练与 LoRA 训练，并使用共置式 rollout 引擎。rollout 引擎直接服务已发布的 NVFP4 / MXFP8 专家。</p>
+<table>
+<thead>
+<tr>
+<th>领域</th>
+<th>状态</th>
+<th>覆盖范围</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>训练</td>
+<td>是</td>
+<td>Megatron 全参数与 LoRA；LoRA 可作用于注意力、路由专家和输出投影</td>
+</tr>
+<tr>
+<td>Rollout</td>
+<td>是</td>
+<td>SGLang，与训练共置</td>
+</tr>
+<tr>
+<td>并行</td>
+<td>是</td>
+<td>训练器 EP8；rollout 引擎使用 TP4 / EP4 或 TP8 / EP8</td>
+</tr>
+<tr>
+<td>量化</td>
+<td>是</td>
+<td>BF16 训练器，rollout 服务已发布的 NVFP4 / MXFP8 专家</td>
+</tr>
+<tr>
+<td>TITO</td>
+<td>是</td>
+<td>基于 OpenAI 与 Anthropic API 的 token-in/token-out 多轮会话，包括工具调用</td>
+</tr>
+<tr>
+<td>视觉</td>
+<td>是</td>
+<td>图像提示词通过冻结的视觉塔处理</td>
+</tr>
+<tr>
+<td>已验证运行</td>
+<td>是</td>
+<td>DAPO-Math-17k LoRA，8× GB300；93 个 GRPO 步骤</td>
+</tr>
+</tbody></table>
+<p>我们在 8× GB300（两个 4-GPU 节点）上验证了 DAPO-Math-17k LoRA：训练器使用 EP8，每个节点部署一个 TP4 / EP4 rollout 引擎。每步使用 32 条提示词 × 8 个样本，响应上限 4,096 token，并在注意力、路由专家和输出投影上使用 rank-32 adapter。该运行完成 93 个 GRPO 步骤。在前 85 步中，平滑奖励从 0.72 上升到约 0.85，训练与 rollout 的 KL 散度保持在约 1.1–1.4 × 10⁻³。</p>
+<p><img src="assets/2026-11-12-inkling-2-small-day0-support/miles-lora-raw-reward-M1mic7fs.png" alt="DAPO-Math-17k LoRA rollout 原始奖励与平滑趋势"></p>
+<p><img src="assets/2026-11-12-inkling-2-small-day0-support/miles-lora-train-rollout-kl-B4Vxmd06.png" alt="DAPO-Math-17k LoRA 训练与 rollout KL 散度"></p>
+<p><em>Inkling 2 Small 在 8× GB300 上进行 DAPO-Math-17k LoRA 训练，第 0–84 步。第一张图显示 rollout 奖励，浅色线为原始值，深色线为平滑趋势；第二张图显示训练与 rollout 的 KL 散度。</em></p>
+<p>我们还使用 Geometry3K 图像提示词和 1,024-token 响应验证了多模态 LoRA 训练。15 个 GRPO 步骤中，rollout 原始奖励从 0.50 上升到 0.94，训练与 rollout KL 散度保持在约 1.4–2.1 × 10⁻³。</p>
+<p><img src="assets/2026-11-12-inkling-2-small-day0-support/miles-mm-raw-reward-Cg4StGri.png" alt="Geometry3K 多模态 LoRA rollout 原始奖励"></p>
+<p><img src="assets/2026-11-12-inkling-2-small-day0-support/miles-mm-train-rollout-kl-CrdHPD3u.png" alt="Geometry3K 多模态 LoRA 训练与 rollout KL 散度"></p>
+<p><em>Inkling 2 Small 在 Geometry3K 上进行 LoRA 训练，第 0–14 步。第一张图显示 rollout 奖励，第二张图显示训练与 rollout KL 散度。</em></p>
+<p>配方、转换和启动命令见 <a href="https://miles.radixark.com/docs/models/thinkingmachines/inkling-2-small">Miles 文档</a>。</p>
+<h2>致谢</h2>
+<p>感谢 Thinking Machines Lab 团队和 NVIDIA 团队与 SGLang、Miles 团队合作，为 Inkling 2 Small 提供首日支持。</p>
+<hr>
+<p>原文：<a href="https://www.sglang.io/blog/inkling-2-small-day0-support">SGLang and Miles Add Day-0 Support for Inkling 2 Small</a></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

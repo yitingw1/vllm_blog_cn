@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Inkling 2 Small 登陆 vLLM：首日支持">
+  <title>Inkling 2 Small 登陆 vLLM：首日支持</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>Inkling 2 Small 登陆 vLLM：首日支持</h1>
+        <p class="original-title">Inkling 2 Small on vLLM: Day-0 Support</p>
+        <div class="meta">
+          <span>作者：Inferact 与 Thinking Machines</span>
+          <span>发布日期：2026-11-12</span>
+          <a href="https://vllm.ai/blog/2026-11-12-inkling2-small">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Inkling 2 Small 登陆 vLLM：首日支持</h1>
+<p><img src="assets/2026-11-12-inkling2-small/hero.png" alt="Inkling 2 Small 在 vLLM 上获得首日支持"></p>
+<p>vLLM 在首日即支持 Thinking Machines 的 <a href="https://thinkingmachines.ai/news/inkling-2-small/">Inkling 2 Small</a>。这是一个文本与视觉多模态 MoE 模型，总参数量 594B、激活参数量 17B，上下文最长 100 万 token。模型还自带原生 DSpark 推测器。vLLM 为其提供优化后的性能（TP4、接受长度 3.5 时，单用户最高 630 TPS），同时支持 LoRA。</p>
+<h2>要点速览</h2>
+<ul>
+<li><strong>总参数 594B、激活参数 17B、100 万 token 上下文。</strong> 48 层 MoE、384 个专家（top-8），输入图像和文本，输出文本。</li>
+<li><strong>相较 Inkling 的架构升级。</strong> 加入块注意力残差（Block Attention Residuals）、注意力汇聚点（attention sink）、门控注意力和 ViT 图像编码器。</li>
+<li><strong>混合精度 MoE。</strong> 第 0–39 层使用 NVFP4，第 40–47 层使用 MXFP8，因此单节点即可部署模型。</li>
+<li><strong>原生 DSpark 推测器。</strong> 带 RNN 头的 DSpark 每步草拟 7 个 token。</li>
+<li><strong>广泛优化。</strong> 采用内核融合、PDL、高度调优的 Gluon 注意力内核和序列并行；在 GB200 上使用 TP4、接受长度 3.5 时，单用户最高达到 630 TPS。</li>
+<li><strong>RL 与 LoRA 支持。</strong> vLLM 支持该模型的强化学习（通过 SkyRL）和 LoRA。</li>
+</ul>
+<p>可以用以下命令启动服务：</p>
+<pre><code class="language-bash">vllm serve thinkingmachines/Inkling-2-Small \
+  --tensor-parallel-size 8 \
+  --reasoning-parser inkling --tool-call-parser inkling --enable-auto-tool-choice \
+  --speculative-config &#39;{&quot;method&quot;:&quot;dspark&quot;,&quot;num_speculative_tokens&quot;:7,&quot;draft_sample_method&quot;:&quot;probabilistic&quot;}&#39;
+</code></pre>
+<h2>模型架构</h2>
+<iframe class="vllm-embed" src="assets/2026-11-12-inkling2-small/inkling2-arch-layer.html" title="Inkling 2 Small 架构：一个解码器层" loading="lazy" scrolling="no" style="display:block;width:100%;height:630px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-inkling2-small/inkling2-arch-layer.html">单独打开架构交互图</a></p>
+<p><img src="assets/2026-11-12-inkling2-small/inkling2-arch-layer-fallback.png" alt="架构交互图静态备用图"></p>
+<p><em>图 1：Inkling 2 Small 架构。金色表示相较 Inkling 新增或改变的部分。</em></p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>Inkling</th>
+<th>Inkling 2 Small</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>层数</td>
+<td>66（55 个滑动窗口层 + 11 个全注意力层）</td>
+<td>48（40 个滑动窗口层 + 8 个全注意力层）</td>
+</tr>
+<tr>
+<td>残差路径</td>
+<td>残差流</td>
+<td>块注意力残差（8 个块，每块 6 层）</td>
+</tr>
+<tr>
+<td>注意力</td>
+<td>带相对偏置的 GQA，不使用 RoPE</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>头数（query / KV）</td>
+<td>全注意力 64 / 8，滑动窗口 64 / 16</td>
+<td>所有层均为 48 / 8</td>
+</tr>
+<tr>
+<td>滑动窗口</td>
+<td>512</td>
+<td>1,024</td>
+</tr>
+<tr>
+<td>注意力输出</td>
+<td>普通输出</td>
+<td>sigmoid 门控和逐 token sink</td>
+</tr>
+<tr>
+<td>短卷积</td>
+<td>每层 4 个（K、V、注意力输出、MLP 输出），卷积核大小 4</td>
+<td>相同</td>
+</tr>
+<tr>
+<td>MoE</td>
+<td>256 个路由专家（top-6）+ 2 个共享专家 sink；前 2 层为稠密层</td>
+<td>384 个路由专家（top-8），无共享专家，所有层均为 MoE</td>
+</tr>
+<tr>
+<td>专家精度</td>
+<td>NVFP4</td>
+<td>第 0–39 层 NVFP4，第 40–47 层 MXFP8</td>
+</tr>
+<tr>
+<td>模态</td>
+<td>文本、图像、音频输入；文本输出</td>
+<td>文本、图像输入；文本输出</td>
+</tr>
+<tr>
+<td>图像编码器</td>
+<td>4 层 hMLP，40×40 patch</td>
+<td>23 层 ViT（宽度 1,024），20×20 patch</td>
+</tr>
+<tr>
+<td>推测解码</td>
+<td>8 个串联 MTP 头</td>
+<td>DSpark 草拟模型，每步 7 个 token</td>
+</tr>
+</tbody></table>
+<p><strong>Inkling 骨干 + 近期架构进展。</strong> Inkling 2 Small 保留 Inkling 的骨干：滑动窗口与全注意力按 5:1 混合；GQA 使用学习到的相对偏置而非 RoPE；每层包含四个短卷积，并使用 sigmoid 路由 MoE。在此基础上，它加入了近期进展。<a href="https://arxiv.org/abs/2603.15031">块注意力残差</a>替代传统残差流：每个子层之前，一个学习到的 query 会混合先前各 6 层块的输出。<a href="https://arxiv.org/abs/2505.06708">门控注意力</a>在每个头的输出上加入 sigmoid 门控，并配合逐 token 的<a href="https://arxiv.org/abs/2309.17453">注意力 sink</a>。图像编码器也由 hMLP 换成 23 层 ViT。</p>
+<p><strong>采用 Four-Over-Six NVFP4 的混合精度 MoE。</strong> Inkling 2 Small 的 48 层中，前 40 层专家使用 NVFP4，后 8 层使用 MXFP8。NVFP4 激活使用逐 token 全局缩放和双候选块缩放（<a href="https://arxiv.org/abs/2512.02010">Four Over Six</a>）：对于每个 16 元素块，量化器分别尝试把块最大值缩放到 6 和 4，并保留重建误差（MAE）更低的方案。</p>
+<p><strong>带 RNN 头的 DSpark 推测器。</strong> 检查点使用 DSpark 草拟模型替代 Inkling 的 8 个串联 MTP 头。推测器包含 5 层，每步草拟 7 个 token；其 head 采用 <a href="https://arxiv.org/abs/2607.05147">DeepSeek DSpark 论文</a>介绍的 RNN 变体。</p>
+<h2>vLLM 集成与优化</h2>
+<iframe class="vllm-embed" src="assets/2026-11-12-inkling2-small/inkling2-fused.html" title="Inkling 2 Small：解码和大规模预填充中每层使用的内核" loading="lazy" scrolling="no" style="display:block;width:100%;height:780px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-inkling2-small/inkling2-fused.html">单独打开内核交互图</a></p>
+<p><img src="assets/2026-11-12-inkling2-small/inkling2-fused-fallback.png" alt="内核交互图静态备用图"></p>
+<p><em>图 2：一个解码器层在解码和大规模预填充中的内核。</em></p>
+<p><strong>内核融合与 PDL。</strong> vLLM 把子层之间的集合通信与内存带宽受限操作积极融合为单个内核。使用注意力残差后，每个边界都需要一次 all-reduce、一次短卷积、一次残差更新、一次注意力残差混合和一次 RMSNorm，也就是对同一组隐藏状态执行五个内存受限步骤。融合内核 <code>allreduce_conv_mix</code>（图 2 金色部分）通过 NVLink multicast 执行 all-reduce，并将其后的全部操作保留在寄存器中。GEMM、注意力、路由和激活内核使用程序化依赖启动（programmatic dependent launch，PDL），让每个内核的 prologue 与前一内核的尾部重叠；在小批量下，解码步骤由一长串短内核组成，这项优化尤其重要。</p>
+<p><strong>融合激活量化的 MoE。</strong> vLLM 在生成专家激活的内核内部直接完成量化（每层按其精度使用 NVFP4 或 MXFP8），因此不需要单独的量化过程再次读写隐藏状态。路由内核会在 gate/up projection 前量化 token，带 softcap 的 SwiGLU 则在 down projection 前量化输出。专家 GEMM 使用 FlashInfer 随附的 TensorRT-LLM batched-GEMM 内核。</p>
+<p><strong>预填充序列并行。</strong> 普通张量并行在每次 all-reduce 后，会让每张 GPU 对全部 token 重复执行短卷积、注意力残差混合和 RMSNorm。这在解码中代价不高，在预填充中却很昂贵。vLLM 用序列并行消除重复（图 2 紫色和金色部分）：每张 GPU 执行 reduce-scatter，仅在自己的 token 分片上由融合 <code>conv_mix</code> 内核完成短卷积、残差更新、注意力残差混合和 RMSNorm，然后 all-gather 结果供下一个 GEMM 使用。TP4 下，8K-token 预填充步骤缩短 22%；TP8 下缩短 26%，并为每张 GPU 的 KV 缓存释放 1.3–1.9 GiB。</p>
+<p><strong>为解码优化的 Gluon 相对注意力内核。</strong> Inkling 的 FlashAttention-4 解码路径在 Inkling 2 Small 上较慢，因为 6:1 的 GQA 比例会静默禁用 GQA packing。为此，我们为解码和验证编写了 warp-specialized Gluon 内核，把 6 个头打包为一个 64 行 tile，并只读取一次 KV：一个 TMA warp 流式读取 KV，一个 tcgen05 warp 执行 MMA，四个 softmax warp 应用相对偏置。在 100K 上下文、batch 1 时，一个解码步骤由 15.1 ms 降到 4.8 ms。预填充仍使用 Inkling 的 sheared-bias FlashAttention-4 路径。</p>
+<h3>性能</h3>
+<p>我们在 TP8（两个 4-GPU 节点）上，以 DSpark 概率式草拟和前缀缓存测试 Inkling 2 Small 的智能体工作负载。每个会话保留长上下文，每轮追加上一轮回答和约 2K-token 的工具输出，因此每轮只有约 3K 个新 token；随后在 temperature 1.0、开启推理的情况下生成 1,024 个 token。下表给出在单用户获得 100 tok/s 时对应并发量下的每 GPU 输出吞吐。</p>
+<table>
+<thead>
+<tr>
+<th>会话上下文</th>
+<th>单用户 100 tok/s 时每 GPU 输出 tok/s</th>
+<th>并发会话数</th>
+<th>前缀缓存命中率</th>
+<th>接受长度</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>32K</td>
+<td>约 1,070</td>
+<td>约 84</td>
+<td>91%</td>
+<td>3.3</td>
+</tr>
+<tr>
+<td>64K</td>
+<td>约 915</td>
+<td>约 72</td>
+<td>95%</td>
+<td>3.4</td>
+</tr>
+<tr>
+<td>128K</td>
+<td>约 700</td>
+<td>约 55</td>
+<td>98%</td>
+<td>3.5</td>
+</tr>
+<tr>
+<td>256K</td>
+<td>约 450</td>
+<td>约 37</td>
+<td>99%</td>
+<td>3.5</td>
+</tr>
+</tbody></table>
+<p>TP4 下，单用户解码速度约为 630 tok/s，接受长度为 3.5。</p>
+<h2>准确率评估</h2>
+<p>vLLM 保持参考实现的数值行为：每一步使用相同数据类型，注意力输出和路由器使用 FP32，并使用相同的 NVFP4/MXFP8 激活量化；差异仅来自规约顺序和 all-reduce 的 BF16 部分和。我们使用 <a href="https://github.com/thinking-machines-lab/inkling-verify">inkling-verify</a>，在启用 DSpark 的情况下，对最长 100 万 token 的 NIAH、MMMU-Pro 和 HLE 进行端到端验证；得分与不使用推测解码的运行一致。</p>
+<h2>致谢</h2>
+<p>感谢 Thinking Machines 团队在将 Inkling 2 Small 集成并优化到 vLLM 过程中的密切合作。这项工作由 Aurick Qiao（Thinking Machines）和 Woosuk Kwon（Inferact）牵头。</p>
+<hr>
+<p>原文：<a href="https://vllm.ai/blog/2026-11-12-inkling2-small">Inkling 2 Small on vLLM: Day-0 Support</a></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>

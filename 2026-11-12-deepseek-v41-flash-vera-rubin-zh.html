@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍">
+  <title>Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍</h1>
+        <p class="original-title">DeepSeek-V4.1-Flash on Vera Rubin NVL72: 58x Throughput vs. GB300 NVL72 at 387 tokens/s</p>
+        <div class="meta">
+          <span>作者：Inferact 与 vLLM 团队</span>
+          <span>发布日期：2026-11-12</span>
+          <a href="https://vllm.ai/blog/2026-11-12-deepseek-v41-flash-vera-rubin">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍</h1>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/hero.png" alt="Vera Rubin NVL72 相比 GB300 NVL72 的每 GPU 吞吐提升 58 倍"></p>
+<p><strong>要点速览：</strong> 在一套 NVIDIA Vera Rubin NVL72 机架上，vLLM 以每 GPU <strong>170 万 token/s</strong> 的速度服务 DeepSeek-V4.1-Flash，同时每位用户获得 <strong>387 token/s</strong>，吞吐为 GB300 NVL72 的 <strong>58 倍</strong>；峰值吞吐达到 <strong>252 万 token/s</strong>，单用户速度达到 <strong>1,810 token/s</strong>。这些提升来自针对 Rubin 分离式内存与 FP4 Tensor Core 调优的内核、面向低延迟的专用解码内核，以及通过 NVLink 共享的机架级 KV 缓存和 Engram 表。</p>
+<p>这是 DeepSeek-V4.1-Flash 系列的第三篇文章。<a href="https://vllm.ai/blog/2026-10-07-deepseek-v41-flash">第一篇</a>介绍首日适配和内核融合；<a href="https://vllm.ai/blog/2026-10-23-deepseek-v41-flash-pd-wide-ep">第二篇</a>使用 P/D 分离和 Wide-EP 将模型扩展到 GB300 NVL72 机架。本文把同一套软件栈迁移到<a href="https://vllm.ai/blog/2026-10-09-vera-rubin-preview">上月介绍的 Vera Rubin NVL72</a>。</p>
+<p>Rubin 提供了新的优化空间。本文先介绍影响设计的硬件特性，再说明四组优化：</p>
+<ul>
+<li><strong>面向 DEP 预填充和解码的 Rubin 优化内核。</strong>[^terms] 我们为 Rubin 重做了 MoE、注意力、GEMM、mHC 和 indexer 内核：受带宽限制的数据留在每个 SM 自己的内存域；SM107 更宽的 MMA 指令每次发射完成更多工作；内核会在等待前先启动加载及其依赖。DEP2 预填充步骤约快 28%，DEP 解码步骤约快 25%。</li>
+<li><strong>追求最低延迟的专用 TP 解码路径。</strong> 通过跨算子融合、计算与通信重叠和调优，再以 TP8 把模型分布到两个计算托盘，batch 1 时达到 P90 <strong>1,810 token/s</strong>。</li>
+<li><strong>Dynamo 工作负载感知路由与机架级内存池。</strong> Rubin 的速度带来更高并发，因此我们将整机架内存池化：Mooncake KV 池从 DRAM 扩展到空闲 HBM，Engram 表跨 GPU HBM 分片。即便在极高并发下，前缀命中率仍保持 96.5%–97%，仅靠路由即可平衡各 rank。</li>
+</ul>
+<h2>性能概览</h2>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-agentx-curve.html" title="NVIDIA Vera Rubin NVL72 与 GB300 NVL72 上的 SemiAnalysis AgentX：每 GPU 与每 MW" loading="lazy" scrolling="no" style="display:block;width:100%;height:720px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-agentx-curve.html">单独打开 AgentX 性能交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-agentx-curve-fallback.png" alt="AgentX 性能交互图静态备用图"></p>
+<p><em>图 1：NVIDIA Vera Rubin NVL72（vLLM、P/D 分离、Wide-EP）与 GB300 NVL72 上的 SemiAnalysis AgentX。吞吐统计缓存输入、未缓存输入和输出 token（<a href="https://inferencex.semianalysis.com/infx/inference/deepseek-v41-flash?i_seq=agentic-traces&g_model=DeepSeek-V4.1-Flash&i_metric=y_tpPerMw&i_best=0&i_active=gb300_dynamo-vllm">GB300 数据源</a>）。</em></p>
+<p>我们沿用前文方法，以 <a href="https://vllm.ai/blog/2026-09-08-vllm-agentx">SemiAnalysis AgentX</a> 作为有代表性的智能体服务工作负载。图 1 的两个标签页分别比较两套机架的原始吞吐（每 GPU 每秒总 token 数，包括输入、缓存输入和输出）以及按功耗归一化的吞吐。</p>
+<h3>测量方法</h3>
+<p>方法与<a href="https://vllm.ai/blog/2026-10-23-deepseek-v41-flash-pd-wide-ep#how-we-measured">此前的 GB300 文章</a>一致。内核和模型前向分析使用 <code>vllm bench forward</code>，通过真实 <code>execute_model</code> 路径、真实权重和真实 AgentX token 对精确的预填充与解码 batch 计时。预填充内核 A/B 测试会循环运行数秒；存在差异时报告持续性能。</p>
+<h2>从 DeepSeek-V4.1-Flash 视角看 Rubin</h2>
+<p>Vera Rubin NVL72 的三个特性决定了下面的大多数设计。每项 Rubin 专用优化都会指出它依赖的特性。</p>
+<ul>
+<li><strong>每张 GPU 有两个内存域。</strong> SM 读取自身域的速度远高于交错内存，读取另一域更慢。正如 <a href="https://vllm.ai/blog/2026-10-09-vera-rubin-preview#locality-domain-support">Rubin 预览</a>所示，这对带宽受限数据非常重要，包括 MoE 权重、LM head、MegaMoE combine buffer 和 mHC 残差流。</li>
+<li><strong>SM107 新增更宽的块缩放 MMA 指令。</strong> MegaMoE 和低延迟路由 GEMM 使用新的 K64 混合精度（FP8×FP4）MMA，每条指令完成两倍工作。每 rank 8K 以上 token 时，MegaMoE 吞吐提高 8%–11%；低 batch 路由 GEMM 加快 12%。在 indexer 中，新 K128 FP4 MMA 配合 6-token query tile，使解码 MQA-logits 内核加快 15%–22%。</li>
+<li><strong>72 张 GPU 共享一个 NVLink 域。</strong> TP8 可以跨两个计算托盘运行，几乎没有额外 all-reduce 成本。预填充实例还能高效读取彼此 HBM，因此大表无需复制到每个实例。</li>
+</ul>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-fp4-stages.html" title="路由专家 GEMM 的权重 stage：SM100 与 SM107" loading="lazy" scrolling="no" style="display:block;width:100%;height:520px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-fp4-stages.html">单独打开 FP4 stage 交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-fp4-stages-fallback.png" alt="FP4 stage 交互图静态备用图"></p>
+<p><em>图 2：一个 SM 的共享内存中，路由专家 GEMM 在 SM100 MXFP8×MXFP4 MMA 与 SM107 K64 MXFP8×MXFP4 packed FP4 MMA 下的权重 stage。</em></p>
+<h2>深入优化细节</h2>
+<h3>内核</h3>
+<p>我们保留 GB300 上的三种引擎形态：DEP2 预填充、Wide-EP 解码（DEP16 或 DEP32），以及追求最低延迟的 TP 解码路径。DeepSeek 的内核集合——MegaMoE、MegaAttn、Mega-mHC、MegaGate 和 DeepSelect——也保持不变，但其中大部分针对 SM107 重新构建。</p>
+<h4>DEP 预填充：每步时间约减少 28%</h4>
+<p>每 rank 32K token 时，专家 GEMM 主导预填充步骤；其余大部分时间用于把残差和注意力工作集流式传过 HBM。因此本轮优化聚焦 GEMM 周边内核和 Rubin 的双内存域：Mega-mHC 保持残差位于本地 die，MegaAttn 让 Tensor Core 持续发射而非等待加载，MegaGate 只为仍可能进入 top-6 的专家计算分数。这些改动使 32K-token DEP2 预填充步骤缩短 28%。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-prefill-kernels.html" title="Rubin 上的三个预填充内核变化" loading="lazy" scrolling="no" style="display:block;width:100%;height:700px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-prefill-kernels.html">单独打开预填充内核交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-prefill-kernels-fallback.png" alt="预填充内核交互图静态备用图"></p>
+<p><em>图 3：三项预填充内核变化：Mega-mHC 的 die-local 残差、MegaAttn 流水线、MegaGate 候选过滤器，以及它们叠加后的步骤收益。</em></p>
+<details><summary><strong>预填充优化详情</strong></summary>
+
+<ul>
+<li><strong>MegaMoE：按最繁忙 rank 确定 tile 大小。</strong> vLLM 的 eager 预填充不会填充 DP batch，因此真实 DEP2 预填充步骤中有 86% 出现空闲 rank 按自己的少量 token 设置 MegaMoE tile，而其专家实际在处理繁忙 rank 的 token。现在 tile 取本地与 DP 平均 token 数中的较大值。40 步回放中，MegaMoE 时间下降 55%；与空闲 rank 相邻的单请求 TTFT 在 8K–32K token 范围缩短 13%–39%。</li>
+<li><strong>Mega-mHC：将残差流置于 die-local 内存。</strong> 预填充规模下，Mega-mHC 受 HBM 限制，每个 token 需要流式处理约 100 KB 的四路残差。残差现在存入跨两个内存域条带化的池；每个域有独立任务计数器，使 SM 先耗尽自身域再协助另一域。大 grid 随后受指令缓存限制，因此现在循环执行一份 Post 主体，而不是四份。32K token 时每次调用从 354 µs 降至 317 µs；5K 以上 token 的 DEP2 步骤加快 0.6%–1.3%。</li>
+<li><strong>SM107 K64 块缩放 MMA 上的 query up-projection。</strong> MegaAttn 的 <code>[tokens×1,280] × [1,280×32,768]</code> query GEMM 从 cuDNN SM100 内核迁移到 FlashInfer CuTe DSL GEMM，并使用 SM107 K64 MMA。4K–32K 行时加快 13%–18%，16K–32K 的 DEP2 步骤缩短 1.1%–1.7%。</li>
+<li><strong>MegaAttn：持续向 Tensor Core 供给数据。</strong> 每 rank 16K–32K token 时，稀疏注意力受发射和加载延迟限制。空闲 warp 现在发射 SV，使 QK 不再排在其后等待；KV producer 在等待 slot 前加载下一 block 的 top-k index；cluster-launch-control warp 把下一任务的 index 行预取到 L2；当前任务最后一个 QK 前就开始加载下一任务的 query。每个 TMEM lane group 独立完成自身 key 的评分，softmax 不再通过共享内存交换部分和。16K–32K 时内核快 15%，4K 时快 23%，DEP2 步骤缩短 0.9%–2.1%。</li>
+<li><strong>Mega-mHC：带 ticket 的任务环。</strong> 长提示词下，固定任务 stride 会让 RMSNorm worker 落后于 Post，重新读取 Post 输出时无法命中 L2。大 grid 改为从原子 ticket 计数器领取任务，32K 时快 18%。Norm 任务还会提前发出全部加载、预取下一任务系数，并让两个 Post warpgroup 共用一份代码以节省指令缓存；4K–32K token 下，每次调用再快 13%–22%。</li>
+<li><strong>MegaGate：每个 token 只读一次，只计算可能入选的专家。</strong> 长提示词下，一个 CTA pair 会从一次共享内存 stage 计算 token block 的全部 384 个专家（M=256 和 M=128 UMMA），不再按每 128 个专家重复读取 token。路由器只对仍可能进入 top-6 的专家计算精确 sqrt-softplus：利用第六大分数的界和函数斜率为每个专家设阈值，384 个专家中约 7 个通过。4K 起内核加快 3%–13%；32K 时由 77 µs 降至 68 µs。</li>
+</ul>
+</details>
+
+<h4>DEP 解码：每步时间约减少 25%</h4>
+<p>与 GB300 一样，解码受 MoE 限制。相比已经包含 die-local 权重、Wide-EP dispatch 和 MQA logits 改动的首版 Rubin 构建，这些优化使 DEP32 解码步骤的目标前向（每 rank 20 个请求 × 6 token，DSpark k=5，在一个 4-GPU 节点模拟）缩短约 25%。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-decode-kernels.html" title="Rubin Wide-EP 解码内核优化" loading="lazy" scrolling="no" style="display:block;width:100%;height:740px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-decode-kernels.html">单独打开解码内核交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-decode-kernels-fallback.png" alt="解码内核交互图静态备用图"></p>
+<p><em>图 4：四项 Wide-EP 解码改动：die-local 专家权重、每个已分发 token 一次 NVLink 往返、等待数据而非 barrier 的 combine，以及跨 SM107 cluster 的 split-K projection。</em></p>
+<details><summary><strong>解码优化详情</strong></summary>
+
+<ul>
+<li><strong>Die-local MegaMoE 权重。</strong> 解码 MoE 受权重读取限制，而 SM 流式读取自身内存域远快于交错内存。vLLM 按输出列把专家权重拆到两个域，MegaMoE 只给每个域的 SM 分配本地 tile。DEP2 解码前向在 batch 32 时快 10.1%，batch 168 时快 5.5%。</li>
+<li><strong>Wide-EP dispatch：每 token 一次 NVLink 往返。</strong> DEP8 解码时 NVLink 只有峰值的 39%。现在每个拉取 token 会在任何本地存储前发出全部远程加载，只支付一次往返而非两三次。warp 使用一个 fence 和一次 elected release 发布拉取；专家计数使用不返回的 <code>red</code> 原子操作发出，因此首个 SM 的 392 次远程更新不再串行。DEP8 下 MegaMoE 快 17%（192→160 µs）。</li>
+<li><strong>MegaMoE：等待数据而非 barrier 的 combine。</strong> 每次启动前，combine buffer 填充为输出不可能取到的 sentinel；CTA 在自身 GEMM 任务完成后立即 combine，仅重读仍为 sentinel 的 16-byte group，然后恢复 sentinel。跨 rank tail barrier 在一次启动末尾发信号，在下次启动开始时等待。本地专家较少时，会先领取完所有第一 GEMM 任务再领取第二 GEMM，使权重持续流动。解码尺寸下 MegaMoE 加快 3.5%–10.8%。</li>
+<li><strong>SM107 cluster 上的 split-K GEMM。</strong> 每 rank 只有几十行时，注意力输入与输出 projection 启动的 CTA 太少，无法以满带宽流式读取权重。split-K GEMM 把 K 分散到 SM107 cluster，并通过分布式共享内存规约部分和；若 CTA 的 peer slice 超过 28 KB，则从寄存器经 L2 规约。GEMM 加快 10%–38%；每 rank 不超过 16 个请求时解码前向加快 3.1%，17–24 个请求时加快 1.9%。</li>
+<li><strong>MQA logits：6-token tile 与 SM107 K=128 MMA。</strong> DSpark 验证每个请求向 indexer 发送 5–6 行 query。现在内核把它们打包进两个 warpgroup 的一个 192 宽 tile，不再使用三个 warpgroup 的两个 4-token tile；每个 128 维 head 采用一条 SM107 K=128 MMA，而不是两条 K=64，并以 immediate offset 存储，省去每个 split 的 64 位地址计算。每请求 5–6 token 时快 15%–22%。</li>
+<li><strong>拆分 Mega-mHC：关键路径只执行下一层所需工作。</strong> 下一层需要 Mega-mHC 的 Post、route collapse 和 RMSNorm，却不需要其 next mix。现在一个小内核只完成前三项，mix 在 side stream 上运行并在下一边界汇合。每路数据以连续 16-byte 块移动，每个 CTA 最多处理 3 个 token，因此 636 个 token 可在 212 个 SM 上一波完成。每 rank 20–30 个请求时，解码前向快 2.0%–4.8%；连续读取重写使该内核在 18–192 token 时再快 30%–58%。</li>
+<li><strong>MegaAttn 解码：更深流水线。</strong> 解码注意力每 CTA 处理一两个 token，其延迟链为 index 加载、KV gather 与 unpack，再逐 block 执行 QK、softmax 和 SV。现在保持 3 个 block 的 index 加载与 4 个 gather batch 在途；每个 SM 只有一个任务时，空闲 query warpgroup 负责 unpack KV；内核在自身依赖等待后立即触发下游，使输出 projection 的 prologue 与注意力重叠。6–424 行时快 7%–10%。</li>
+</ul>
+</details>
+
+<h3>低延迟：专用 TP 解码路径</h3>
+<p>为了获得最低延迟，我们运行专用解码路径。它从 GB300 版本移植而来，并针对 Rubin 大幅重构，再以 TP8 分布到两个计算托盘。真实 AgentX 会话在并发 1、DSpark 固定每步接受 3.51 token 时，P50 单用户速度由 1,117 提升到 1,844 token/s。除第一个专家 GEMM 外，一步执行由一串接近延迟下限的小内核组成。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-tp8-step.html" title="专用 TP8 解码路径的一步" loading="lazy" scrolling="no" style="display:block;width:100%;height:700px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-tp8-step.html">单独打开 TP8 解码交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-tp8-step-fallback.png" alt="TP8 解码交互图静态备用图"></p>
+<p><em>图 5：专用 TP8 解码路径的一步：引擎跨两个计算托盘分布，以及每层内核链与融合边界。</em></p>
+<details><summary><strong>低延迟优化详情</strong></summary>
+
+<ul>
+<li><strong>通过 NVL72 跨两个托盘运行 TP8。</strong> 每个 rank 保存每个专家的 288 列切片和 8 个注意力头。跨托盘 all-reduce 只比托盘内多 0.3 µs，因此 TP8 几乎免费地把每 GPU 权重读取减半。为路由 GEMM 和稀疏 MLA 使用原生 TP8 shape 后，每步快 35%。</li>
+<li><strong>SM107 上的 packed-FP4 权重 stage。</strong> 第一专家 GEMM 受每个 SM 可保持在途的权重字节数限制。UMMA descriptor 只能寻址 256 KB 共享内存，在 SM100 的每字节 FP4 布局中只能容纳 7 个 stage；SM107 K64 MMA 直接读取 packed FP4，同一空间可容纳 11 个 stage（图 2），每步节省 57 µs。</li>
+<li><strong>Die-local LM head。</strong> LM head 读取一份跨两个内存域拆分的权重副本。每个 SM 只流式读取自身的一半，速度接近域内带宽上限。</li>
+<li><strong>一次完成 all-reduce 与 mHC。</strong> 两次 all-reduce 都从 GEMM epilogue 通过 NVLink multicast store 直接发布到 Lamport mailbox。接收内核求和各 rank，执行 mHC Post、合并四路并计算 RMSNorm；在 MoE 边界，它还会在 grid wait 前运行 router GEMM，每步约节省 30 µs。下一层的 mHC pre-norm 在 side stream 上运行并拆成 64 份（5.8→3.7 µs）；路由 GEMM 为它留出 Rubin 212 个 SM 中的 16 个，再节省 4–10 µs。</li>
+<li><strong>稀疏 MLA。</strong> TP8 下每个 rank 运行 8-head 稀疏 MLA。前一内核仍在运行时，它会收集除当前新 token 外的所有 KV 行；每个 PV block 完成 MMA 后立即把部分结果发送给 owner，节省 16–21 µs。Query RoPE 和 KV-cache 插入融合进注意力前后内核；注意力也提前启动 prologue，再节省 36 µs。</li>
+<li><strong>共享专家放入路由 GEMM。</strong> 80% 的层中，共享专家是 MoE 子层尾部。行数低于 16 时，它现在直接在路由 GEMM 内运行，每步节省 220 µs。</li>
+<li><strong>提前启动下一内核。</strong> all-reduce finalizer 在自身 grid wait 后立即启动依赖内核，节省 16 µs；indexer 的 MQA logits 在 grid sync 前加载 KV，节省 24 µs。</li>
+<li><strong>在层 stream 上执行 Engram all-gather。</strong> TP8 下 NCCL all-gather 会在 Engram 关键路径增加 22 µs。融合 entry 内核和层自身 stream 上的 Lamport all-gather 每步节省约 40 µs。</li>
+</ul>
+</details>
+
+<h3>Dynamo 工作负载感知路由 + 机架级共享内存池</h3>
+<p>Rubin 计算很快，一套机架可承载远高于 GB300 的并发量，所有智能体会话的活跃前缀会超出任一 rank 的缓存。在 GB300 上，我们把前缀保存在逐 rank CPU 层，并将每个会话固定到一个 rank；Rubin 的并发下，该层容量不足，而且固定会话会导致部分 rank 空闲、另一些排队。于是我们将内存跨机架池化：KV 位于 DRAM 和空闲 HBM，通过 RDMA 加载；Engram 表位于 HBM，通过 NVL72 的 NVLink 读取。即使并发极高，前缀命中率仍保持 96.5%–97%，接近理论命中率。会话不再绑定 rank 后，仅使用工作负载感知路由即可保持各 rank 平衡。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-arch.html" title="共享 Mooncake KV 池和 Dynamo 路由" loading="lazy" scrolling="no" style="display:block;width:100%;height:560px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-arch.html">单独打开 KV 池架构交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-arch-fallback.png" alt="KV 池架构交互图静态备用图"></p>
+<p><em>图 6：每个预填充 rank 通过 RDMA 从覆盖机架 DRAM 与空闲 HBM 的 Mooncake 池加载 KV，并通过 NVLink 从 peer HBM 读取 Engram 表，因此 Dynamo 路由器可把请求发送给负载最低的 rank。</em></p>
+<p><strong>Mooncake 池。</strong> 一个覆盖所有预填充与解码托盘 DRAM 的 <a href="https://vllm.ai/blog/2026-05-06-mooncake-store">Mooncake Store</a>取代逐 rank CPU 层，使任意 rank 都能通过 RDMA 加载任意前缀；移动请求只需加载 KV，而非重新计算。我们优化了预填充 scheduler 等待池的方式：查询在进程外异步运行；已命中本地 HBM 的请求跳过查询但仍刷新 lease；查询返回后立即启动 KV 加载，而不是等下一步。因等待查询导致预填充步骤未填满的时间从总步骤时间的 6%–14% 降到 0.5% 以下；等待 KV 加载的时间从 13.5% 降至 1%。</p>
+<p><strong>HBM 池。</strong> DeepSeek-V4.1-Flash 较小、每 token KV 缓存也小，因此服务请求只会使用预填充和解码 GPU 的一部分 HBM。Mooncake 保存前缀后，其余内存本会闲置。现在每个预填充 rank 只保留足够一个最大长度请求使用的 KV 缓存，其余 KV 预算自动作为 HBM segment 交给 Mooncake，把池从 DRAM 扩展到每张预填充 GPU 的空闲 HBM；这些 segment 仍通过同一 RDMA 路径读取。HBM 池目前仍属实验功能。</p>
+<p><strong>Engram 池。</strong> 两类角色现在都将 Engram 的两个 94.4 GiB 哈希 n-gram 表放入 HBM。解码此前已将其跨 DP rank 拆分（<a href="https://github.com/vllm-project/vllm/pull/54371">vllm#54371</a>），但每个 DEP2 预填充实例仍在主机内存保留自己的副本，每托盘约 378 GiB。通过 NVL72，预填充引擎现在组成一个 peer group 拆分表，在 18 张 GPU 上各放 10.5 GiB，其余通过 NVL72 的 NVLink 从 peer HBM 读取，而非 RDMA（<a href="https://github.com/vllm-project/vllm/pull/66552">vllm#66552</a>，图 7）。查询速度比主机内存更快，释放的主机内存还能保存约 1,500 个额外会话的活跃前缀。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-engram-peers.html" title="Engram 表：主机 DRAM 逐实例副本与 HBM peer 分片" loading="lazy" scrolling="no" style="display:block;width:100%;height:520px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-engram-peers.html">单独打开 Engram peer 交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-engram-peers-fallback.png" alt="Engram peer 交互图静态备用图"></p>
+<p><em>图 7：改进前，每个实例在主机 DRAM 中保存 Engram 表；改进后，表被拆分到 peer group 的 HBM。</em></p>
+<p><strong>工作负载感知路由。</strong> 所有前缀进入共享池后，会话无需停留在单一 rank，消除了 session affinity 造成的 DP 不均衡。Dynamo 将每个请求放到未缓存工作量最少的 <code>(worker, DP rank)</code>，只需配置变更。在三个 DEP2 实例、并发 4,800 时，内存池加路由多服务 68% 的请求，TTFT P50 从 29.8 秒降至 4.2 秒，命中率从 91.8% 提升到 96.1%（图 8）。在 12×DEP2 模拟中，某些 rank 空闲而另一个 rank 排队的时间比例由 10.3% 降至 1.3%，TTFT P90 从 0.98 秒降至 0.38 秒。</p>
+<iframe class="vllm-embed" src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-results.html" title="共享 Mooncake 池前后的请求率、TTFT P50 和命中率" loading="lazy" scrolling="no" style="display:block;width:100%;height:440px;border:0;overflow:hidden"></iframe>
+
+<p><a href="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-results.html">单独打开 KV 池结果交互图</a></p>
+<p><img src="assets/2026-11-12-deepseek-v41-flash-vera-rubin/dsv41-rubin-kv-pool-results-fallback.png" alt="KV 池结果交互图静态备用图"></p>
+<p><em>图 8：三个 DEP2 预填充实例在并发 4,800 时的请求率、TTFT P50 和命中率。</em></p>
+<h2>致谢</h2>
+<p>感谢 <strong>DeepSeek</strong> 开源 DeepSeek-V4.1-Flash 及其内核，感谢 <strong>NVIDIA</strong> 提供 Vera Rubin NVL72 的早期访问。特别感谢 NVIDIA 的 Hanjie Qiu、Lisa Wang、Jie Hao、Yaoyao Ding、Pei Li、Xin Li 和 Pen Chung Li 在性能优化方面的密切合作，以及对 <strong>vLLM</strong> 与 <strong>Dynamo</strong> 的持续支持。也感谢 <strong>Mooncake</strong> 团队提供 KV 缓存存储，并感谢 <strong>SemiAnalysis</strong> 开发 AgentX 基准。</p>
+<p>这项工作由 <strong>Inferact</strong> 牵头。</p>
+<p>[^terms]: DEP2、DEP16 和 DEP32 表示数据并行注意力与分别跨 2、16、32 张 GPU 的专家并行组合。</p>
+<hr>
+<p>原文：<a href="https://vllm.ai/blog/2026-11-12-deepseek-v41-flash-vera-rubin">DeepSeek-V4.1-Flash on Vera Rubin NVL72: 58x Throughput vs. GB300 NVL72 at 387 tokens/s</a></p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
