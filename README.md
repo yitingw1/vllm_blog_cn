@@ -10,6 +10,7 @@ AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](a
 
 ## 文章
 
+- [让智能体保持高速：vLLM 中基于 FlyDSL MonoKernel 的高交互性解码](2026-11-18-flydsl-monokernels-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-18-flydsl-monokernels)）
 - [强化学习：通过 vLLM 在 TPU v7 上优化 6 亿参数稠密模型](2026-11-12-rl-small-dense-tpu-v7-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-rl-small-dense-tpu-v7)）
 - [Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍](2026-11-12-deepseek-v41-flash-vera-rubin-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-deepseek-v41-flash-vera-rubin)）
 - [Inkling 2 Small 登陆 vLLM：首日支持](2026-11-12-inkling2-small-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-inkling2-small)）
