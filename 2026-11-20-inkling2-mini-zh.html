@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Inkling 2 Mini 登陆 vLLM：循环模型首日支持">
+  <title>Inkling 2 Mini 登陆 vLLM：循环模型首日支持</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>Inkling 2 Mini 登陆 vLLM：循环模型首日支持</h1>
+        <p class="original-title">Inkling 2 Mini on vLLM: Day-0 Support for a Looped Model</p>
+        <div class="meta">
+          <span>作者：Inferact、Thinking Machines、NVIDIA</span>
+          <span>发布日期：2026-11-20</span>
+          <a href="https://vllm.ai/blog/2026-11-20-inkling2-mini">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><h1>Inkling 2 Mini 登陆 vLLM：循环模型首日支持</h1>
+<p><img src="assets/2026-11-20-inkling2-mini/hero.png" alt="Inkling 2 Mini 登陆 vLLM：循环模型首日支持"></p>
+<p>Thinking Machines 今天<a href="https://thinkingmachines.ai/news/inkling-2-mini/">发布</a>了 <a href="https://huggingface.co/thinkingmachines/Inkling-2-Mini">Inkling 2 Mini</a>。vLLM 从首日开始支持该模型，以及它的可变循环研究 checkpoint <a href="https://huggingface.co/thinkingmachines/TML-d24-varloop-research">TML-d24-varloop-research</a>，运行平台包括 NVIDIA Blackwell、Hopper 和 DGX Spark。Inkling 2 Mini 是一种<strong>循环模型（looped model）</strong>：中间 12 层对每个 token 重复运行三次，三次 pass 共享权重，但各自拥有 KV 缓存，并读取前一次 pass 传来的门控消息。它是一种多模态 MoE，总参数量 26B、激活参数量 3.5B，支持最长 100 万 token 的上下文，并带有原生 DSpark 推测器。</p>
+<h2>概要</h2>
+<ul>
+<li><strong>循环层。</strong> 第 6–17 层使用共享权重运行三次 pass。每次 pass 都保留自己的 KV 缓存，并读取上一次 pass 的门控消息。</li>
+<li><strong>总参数 26B、激活参数 3.5B、100 万上下文、原生 DSpark。</strong> 这是使用 Inkling 2 Small 组件构建的多模态 MoE；专家在前 20 层使用 NVFP4，在最后 4 层使用 MXFP8，并配有原生 DSpark 推测器。</li>
+<li><strong>面向 Blackwell、Hopper 和 DGX Spark 的首日优化支持。</strong> vLLM 像管理普通缓存层一样管理每次 pass 的缓存，融合消息读取与控制器，并复用 Inkling 2 Small 的融合内核。</li>
+<li><strong>强化学习支持。</strong> vLLM 可通过 <a href="https://github.com/NovaSky-AI/SkyRL">SkyRL</a> 为强化学习服务 Inkling 2 Mini。</li>
+<li><strong>可变循环研究 checkpoint。</strong> vLLM 还支持 TML-d24-varloop-research；启动时可以选择 pass 数量，以及多次 pass 是否共享一个 KV 缓存。</li>
+</ul>
+<p>我们提供了支持 Inkling 2 Mini 的 Docker 镜像 <code>vllm/vllm-openai:inkling-2-mini</code>。可用以下命令服务该模型：</p>
+<pre><code class="language-bash">docker run --gpus all --ipc=host -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  vllm/vllm-openai:inkling-2-mini thinkingmachines/Inkling-2-Mini \
+  --reasoning-parser inkling --tool-call-parser inkling --enable-auto-tool-choice \
+  --speculative-config &#39;{&quot;method&quot;:&quot;dspark&quot;,&quot;num_speculative_tokens&quot;:7,&quot;draft_sample_method&quot;:&quot;probabilistic&quot;}&#39;
+</code></pre>
+<p>以下命令服务可变循环研究 checkpoint，并使用 2 次 pass，让它们共享一个 KV 缓存：</p>
+<pre><code class="language-bash">docker run --gpus all --ipc=host -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  vllm/vllm-openai:inkling-2-mini thinkingmachines/TML-d24-varloop-research \
+  --reasoning-parser inkling --tool-call-parser inkling --enable-auto-tool-choice \
+  --hf-overrides &#39;{&quot;text_config&quot;: {&quot;loop_num_passes&quot;: 2, &quot;loop_share_cache&quot;: true}}&#39;
+</code></pre>
+<h2>循环结构</h2>
+<iframe src="assets/2026-11-20-inkling2-mini/inkling-loop.html" title="Inkling 2 Mini：循环层架构" style="width:100%;height:620px;border:0" loading="lazy"></iframe>
+
+<p><a href="assets/2026-11-20-inkling2-mini/inkling-loop.html">单独打开本地循环层架构图</a></p>
+<p><img src="assets/2026-11-20-inkling2-mini/inkling-loop-fallback.png" alt="Inkling 2 Mini 循环层架构静态备用图"></p>
+<p><em>图 1：前奏层和尾声层各运行一次；循环核心运行三次 pass，每次都会读取上一次 pass 的消息。</em></p>
+<p><strong>前奏、核心、尾声。</strong> 24 个层被分为前奏（第 0–5 层）、循环核心（第 6–17 层）和尾声（第 18–23 层）。前奏和尾声各运行一次；核心使用共享权重运行三次 pass，尾声从最后一次 pass 继续执行。每组六层构成 Inkling 2 Small 所使用的一个<a href="https://arxiv.org/abs/2603.15031">分块注意力残差（block attention residual）</a>，因此循环核心的一次 pass 恰好产生两个 block。</p>
+<p><strong>每次 pass 都从前奏的输出开始。</strong> 普通循环模型会把第 p 次 pass 的输出送入第 p + 1 次 pass。这里，三次 pass 都从同一份前奏输出开始，第 p + 1 次 pass 只通过消息看到第 p 次 pass。</p>
+<p><strong>每个子层都会读取消息。</strong> 从第二次 pass 开始，核心中每个子层的输入——注意力的 query、key、value 输入以及 MLP 输入——都会获得一条自己的消息。消息由注意力残差读取机制从上一次 pass 的两个 block 中读取，并针对每一层和每一种输入类型使用一个学习得到的 query。随后，一个 rank-64 控制器按通道将消息合并到输入中：</p>
+<pre><code>h   = W_down · [rms(input), rms(message)]
+out = (1 − tanh(W_forget · h)) · input + tanh(W_gain · h) · message
+</code></pre>
+<p>循环核心有 12 层，每层有 4 种输入，因此后续每次 pass 对每个 token 都会读取 48 条消息。query、key 和 value 输入会收到不同消息，所以滑动窗口层在第一次 pass 中可以由同一输入投影三者，而在后续 pass 中必须接收三份独立输入。</p>
+<p><strong>每次 pass 都保留自己的记忆。</strong> 核心中的每一层、每一次 pass 都有各自的 KV 缓存和卷积状态缓存，因此第 p 次 pass 会关注由第 p 次 pass 为先前 token 计算的 key 和 value。模型虽然只有 24 层，却拥有 48 个 KV 缓存和 48 个卷积状态缓存。</p>
+<p><strong>从循环内部生成 DSpark 草稿。</strong> 三层 DSpark 草稿模型会在目标模型的四次层访问中读取隐藏状态：前奏中一次，第二次和第三次 pass 各一次，以及最终输出一次。</p>
+<p><strong>各层本身沿用 Inkling 2 Small。</strong> 每层都在隐藏维度 2,304 下使用 Inkling 2 Small 的组件：分块注意力残差；带 gate 与 sink 的相对偏置注意力（20 个滑动窗口层和 4 个全注意力层，24 个 query head 和 8 个 KV head）；短卷积；以及 128 个路由专家（top-8）。第 0–19 层的专家使用 NVFP4，第 20–23 层使用 MXFP8。图像则由一个配置与 Inkling 2 Small 相同的 23 层 ViT 编码器处理。</p>
+<h2>在 vLLM 中服务循环结构</h2>
+<p><strong>把每次 pass 的缓存注册为普通缓存层。</strong> vLLM 会把核心层的每个额外 pass 注册为独立注意力层，并为其配置独立的 KV 缓存和卷积状态缓存。KV 缓存管理器和前缀缓存会像对待其他缓存一样处理它们，因此服务循环结构不需要新增缓存管理逻辑。</p>
+<p><strong>融合消息读取和控制器。</strong> 直接实现时，后续 pass 的每个核心层都要启动 4 次消息读取和 4 个控制器，每项又涉及若干内核。vLLM 使用一个注意力残差内核读取某一层的全部四条消息，并把四个控制器的权重堆叠起来，让它们的 down 投影与 gain/forget 投影以批量 GEMM 运行。一个 Triton 内核负责控制器的 RMS 归一化，另一个内核把门控合并与消息所输入子层的 RMSNorm 融合。合并以 FP32 执行，并禁止 FMA contraction，从而与参考实现保持一致。</p>
+<p><strong>围绕每个子层使用融合内核。</strong> 对 Inkling 2 Small，vLLM 会把每个子层的 all-reduce、短卷积、残差更新、注意力残差混合和 RMSNorm 融合成一个内核。vLLM 将这些内核从隐藏维度 4,608 泛化到 2,304，并增加一种在 RMSNorm 前返回 FP32 混合结果的模式，使后续 pass 能把消息合并到其中。Inkling 2 Mini 在所有张量并行规模下都会使用这些内核，包括 TP1；在 TP &gt; 1 时，小 batch 还会通过 NVLink multicast 融合 all-reduce。</p>
+<h2>可变循环研究 checkpoint</h2>
+<p>Thinking Machines 还发布了 <a href="https://huggingface.co/thinkingmachines/TML-d24-varloop-research">TML-d24-varloop-research</a>。这是一个经过训练、能够使用可变 pass 数量运行的研究 checkpoint。vLLM 通过 <code>--hf-overrides</code> 暴露它的两个选项：</p>
+<pre><code class="language-bash">docker run --gpus all --ipc=host -p 8000:8000 \
+  -v ~/.cache/huggingface:/root/.cache/huggingface \
+  vllm/vllm-openai:inkling-2-mini thinkingmachines/TML-d24-varloop-research \
+  --reasoning-parser inkling --tool-call-parser inkling --enable-auto-tool-choice \
+  --hf-overrides &#39;{&quot;text_config&quot;: {&quot;loop_num_passes&quot;: 2, &quot;loop_share_cache&quot;: true}}&#39;
+</code></pre>
+<ul>
+<li><code>loop_num_passes</code> 设置 pass 数量（至少为 1；默认值是 checkpoint 的 3）。pass 越少速度越快，pass 越多质量越高。DSpark 要求使用默认值，因为草稿模型会读取固定的层访问位置。</li>
+<li><code>loop_share_cache</code> 让某个核心层的所有 pass 共用一个 KV 缓存：每次 pass 都会覆盖其 token 对应的 key 和 value，因此后续 token 会读取最后一次 pass 的结果。卷积状态仍按 pass 分开保存。</li>
+</ul>
+<p>固定循环 checkpoint（例如 Inkling 2 Mini）会拒绝这两个选项。在一张 GB200 上（TP1、4K 上下文、仅测 forward pass），结果如下：</p>
+<table>
+<thead>
+<tr>
+<th>Pass 数量</th>
+<th>解码步骤，batch 1</th>
+<th>解码步骤，batch 32</th>
+<th>KV 缓存容量</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>1.51 ms</td>
+<td>3.81 ms</td>
+<td>352K token</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2.67 ms</td>
+<td>5.92 ms</td>
+<td>233K token</td>
+</tr>
+<tr>
+<td>3</td>
+<td>3.85 ms</td>
+<td>8.11 ms</td>
+<td>175K token</td>
+</tr>
+<tr>
+<td>3，共享 KV 缓存</td>
+<td>3.86 ms</td>
+<td>8.10 ms</td>
+<td>194K token</td>
+</tr>
+</tbody></table>
+<p>共享 KV 缓存释放的内存少于减少一次 pass，因为每次 pass 的卷积状态缓存仍然保留。</p>
+<h2>准确性评测</h2>
+<p>vLLM 保持了参考实现的数值行为：每一步使用相同的数据类型，采用相同的 NVFP4 和 MXFP8 激活量化，并以 FP32 合并消息，只有归约顺序不同。在固定 prompt 上，vLLM 在全部 48 次层访问中的隐藏状态与参考实现之间的差异，大致相当于参考实现自身的 FlashAttention-4 路径与 PyTorch 注意力路径之间的差异；当输入相同时，MoE 输出可以逐位匹配。</p>
+<p>端到端测试方面，我们在启用 DSpark 的情况下，使用 <a href="https://github.com/thinking-machines-lab/inkling-verify">inkling-verify</a> 测试了最长 100 万 token 的 needle-in-a-haystack、MMMU-Pro 和 HLE，并测试了 GSM8K。</p>
+<h2>致谢</h2>
+<p>感谢 Thinking Machines 和 NVIDIA 团队在将 Inkling 2 Mini 集成并优化到 vLLM 的过程中所进行的紧密合作。</p>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
