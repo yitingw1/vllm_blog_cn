@@ -2,6 +2,7 @@
 <html lang="zh-CN">
 <head>
   <meta charset="utf-8">
+  <link rel="icon" href="data:,">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="vLLM、SGLang 与 AMD 技术博客中文翻译及原生交互版本">
   <title>LLM 推理博客中文站</title>
@@ -17,6 +18,7 @@
       --brand-soft: #e8f1ff;
       --sglang: #b94b17;
       --amd: #c51a4a;
+      --arxiv: #6b3fc7;
       --shadow: 0 18px 50px rgba(32, 56, 85, .13);
     }
     * { box-sizing: border-box; }
@@ -113,6 +115,7 @@
     }
     .source.sglang { color: var(--sglang); border-color: #f0c6b3; background: #fff7f2; }
     .source.amd { color: var(--amd); border-color: #edb6c6; background: #fff4f7; }
+    .source.arxiv { color: var(--arxiv); border-color: #d4c4f2; background: #f8f5ff; }
     .empty { padding: 28px 12px; color: var(--muted); text-align: center; }
     .viewer { min-width: 0; display: flex; flex-direction: column; background: #fff; }
     .toolbar {
@@ -175,6 +178,7 @@
             <button class="filter" data-source="vLLM">vLLM</button>
             <button class="filter" data-source="SGLang">SGLang</button>
             <button class="filter" data-source="AMD">AMD</button>
+            <button class="filter" data-source="arXiv">arXiv</button>
           </div>
         </div>
         <nav class="article-list" id="article-list"></nav>
@@ -233,6 +237,7 @@
       { source: 'SGLang', date: '2026-09-10', title: 'SGLang 上的 DeepSeek-V4.1 Flash：从 35 提升到 873 token/s', path: 'sglang_blog_cn/2026-09-10-deepseek-v4.1-flash-kernel-optimization-zh.html' },
       { source: 'SGLang', date: '2026-09-09', title: 'SGLang 与 Miles 首日支持 DeepSeek-V4.1', path: 'sglang_blog_cn/2026-09-09-deepseek-v4.1-day0-support-zh.html' },
       { source: 'SGLang', date: '2026-08-27', title: 'SGLang 的 Breakable CUDA Graph：图构建提速 5 倍', path: 'sglang_blog_cn/2026-08-27-breakable-cuda-graph-zh.html' },
+      { source: 'arXiv', date: '2026-08-24', title: 'DWDP：面向 NVL72 高性能 LLM 推理的分布式权重数据并行', path: 'papers_cn/2026-08-24-dwdp-nvl72-zh.html' },
       { source: 'SGLang', date: '2026-08-19', title: 'Kimi K3：架构解析与 SGLang 首日支持', path: 'sglang_blog_cn/2026-08-19-kimi-k3-day0-support-zh.html' },
       { source: 'AMD', date: '2026-07-21', title: '从第一性原理重建 AMD GPU 智能体 AI：携手 Moonshot AI', path: 'amd_blog_cn/2026-07-21-rebuilding-agentic-ai-for-amd-gpu-zh.html' }
     ];
@@ -264,7 +269,7 @@
         const button = document.createElement('button');
         button.type = 'button';
         button.className = `article${selected === article.path ? ' active' : ''}`;
-        const sourceClass = article.source === 'SGLang' ? ' sglang' : article.source === 'AMD' ? ' amd' : '';
+        const sourceClass = article.source === 'SGLang' ? ' sglang' : article.source === 'AMD' ? ' amd' : article.source === 'arXiv' ? ' arxiv' : '';
         button.innerHTML = `<span class="article-title"></span><span class="article-meta"><span class="source${sourceClass}">${article.source}</span><span>${article.date}</span></span>`;
         button.querySelector('.article-title').textContent = article.title;
         button.addEventListener('click', () => selectArticle(article, true));

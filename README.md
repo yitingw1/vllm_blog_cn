@@ -8,6 +8,8 @@ SGLang 官方博客的中文翻译单独保存在 [`sglang_blog_cn/`](sglang_blo
 
 AMD 技术博客与 ROCm 博客的中文翻译单独保存在 [`amd_blog_cn/`](amd_blog_cn/README.md)。
 
+AI 系统论文的中文翻译单独保存在 [`papers_cn/`](papers_cn/README.md)。
+
 ## 文章
 
 - [Inkling 2 Mini 登陆 vLLM：循环模型首日支持](2026-11-20-inkling2-mini-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-20-inkling2-mini)）
