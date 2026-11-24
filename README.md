@@ -12,7 +12,9 @@ AI 系统论文的中文翻译单独保存在 [`papers_cn/`](papers_cn/README.md
 
 ## 文章
 
+- [跳过 DRAM 层：MoRI UMBP 在 NVMe 上运行智能体 KV 缓存](2026-11-23-skip-the-dram-tier-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-23-skip-the-dram-tier)）
 - [Inkling 2 Mini 登陆 vLLM：循环模型首日支持](2026-11-20-inkling2-mini-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-20-inkling2-mini)）
+- [vLLM 首日支持 ERNIE 5.5 Flash Preview：插件部署与端到端推理加速](2026-11-18-ernie-5-5-flash-preview-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-18-ernie-5-5-flash-preview)）
 - [让智能体保持高速：vLLM 中基于 FlyDSL MonoKernel 的高交互性解码](2026-11-18-flydsl-monokernels-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-18-flydsl-monokernels)）
 - [强化学习：通过 vLLM 在 TPU v7 上优化 6 亿参数稠密模型](2026-11-12-rl-small-dense-tpu-v7-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-rl-small-dense-tpu-v7)）
 - [Vera Rubin NVL72 上的 DeepSeek-V4.1-Flash：单用户 387 token/s 时吞吐比 GB300 NVL72 高 58 倍](2026-11-12-deepseek-v41-flash-vera-rubin-zh.html)（[英文原文](https://vllm.ai/blog/2026-11-12-deepseek-v41-flash-vera-rubin)）
