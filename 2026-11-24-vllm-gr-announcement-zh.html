@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="发布 vLLM-GR：面向生成式推荐的高效推理">
+  <title>发布 vLLM-GR：面向生成式推荐的高效推理</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-soft: #f1f4f8;
+      --text: #172033;
+      --muted: #637083;
+      --border: #dce2ea;
+      --link: #1769c2;
+      --accent: #f0a51a;
+      --code-bg: #111827;
+      --code-text: #e5edf7;
+      --shadow: 0 14px 40px rgba(28, 39, 55, .08);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #151b23;
+        --surface-soft: #1c2430;
+        --text: #e7edf5;
+        --muted: #9aa8ba;
+        --border: #303a48;
+        --link: #75b7ff;
+        --code-bg: #090c10;
+        --code-text: #e6edf3;
+        --shadow: 0 14px 40px rgba(0, 0, 0, .26);
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      line-height: 1.78;
+    }
+    a { color: var(--link); text-underline-offset: 3px; }
+    .page {
+      display: grid;
+      grid-template-columns: minmax(0, 860px) 260px;
+      gap: 32px;
+      width: min(1180px, calc(100% - 40px));
+      margin: 36px auto 72px;
+      align-items: start;
+    }
+    article {
+      min-width: 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: clamp(24px, 5vw, 64px);
+      box-shadow: var(--shadow);
+    }
+    .eyebrow {
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 750;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: .3rem 0 .7rem;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      line-height: 1.12;
+      letter-spacing: -.035em;
+    }
+    .original-title { margin: 0 0 1rem; color: var(--muted); font-size: .98rem; }
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 18px;
+      margin-bottom: 34px;
+      color: var(--muted);
+      font-size: .92rem;
+    }
+    .article-body h2, .article-body h3 {
+      scroll-margin-top: 24px;
+      line-height: 1.28;
+      letter-spacing: -.018em;
+    }
+    .article-body h2 { margin: 2.8rem 0 1rem; font-size: 1.75rem; }
+    .article-body h3 { margin: 2.1rem 0 .8rem; font-size: 1.3rem; }
+    .article-body p, .article-body li { font-size: 1.02rem; }
+    .article-body li + li { margin-top: .45rem; }
+    .article-body img {
+      display: block;
+      max-width: 100%;
+      height: auto;
+      margin: 24px auto;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+    .article-body iframe {
+      display: block;
+      width: 100% !important;
+      max-width: 100%;
+      margin: 24px 0 12px;
+      background: #fff;
+      border: 1px solid var(--border) !important;
+      border-radius: 12px;
+    }
+    .article-body pre {
+      overflow-x: auto;
+      padding: 20px;
+      border-radius: 12px;
+      background: var(--code-bg);
+      color: var(--code-text);
+      line-height: 1.55;
+    }
+    .article-body code {
+      font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
+      font-size: .9em;
+    }
+    .article-body :not(pre) > code {
+      padding: .15em .4em;
+      border-radius: 5px;
+      background: var(--surface-soft);
+      color: var(--text);
+    }
+    .article-body blockquote {
+      margin-left: 0;
+      padding: 4px 18px;
+      border-left: 4px solid var(--accent);
+      color: var(--muted);
+      background: var(--surface-soft);
+    }
+    .article-body table {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      margin: 24px 0;
+      overflow-x: auto;
+      border-spacing: 0;
+      border-collapse: collapse;
+      font-size: .94rem;
+    }
+    .article-body th, .article-body td {
+      min-width: 8rem;
+      padding: 10px 12px;
+      border: 1px solid var(--border);
+      text-align: left;
+      vertical-align: top;
+    }
+    .article-body th { background: var(--surface-soft); font-weight: 700; }
+    .article-body hr { border: 0; border-top: 1px solid var(--border); margin: 36px 0; }
+    details {
+      margin: 12px 0 28px;
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface-soft);
+    }
+    summary { cursor: pointer; color: var(--muted); }
+    .toc {
+      position: sticky;
+      top: 24px;
+      max-height: calc(100vh - 48px);
+      overflow: auto;
+      padding: 18px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background: var(--surface);
+      box-shadow: var(--shadow);
+    }
+    .toc strong { display: block; margin-bottom: 10px; }
+    .toc ol { margin: 0; padding-left: 1.15rem; }
+    .toc li { margin: .35rem 0; color: var(--muted); font-size: .86rem; line-height: 1.35; }
+    .toc li.sub { margin-left: .75rem; }
+    .toc a { color: inherit; text-decoration: none; }
+    .toc a:hover { color: var(--link); }
+    .footer-note { margin-top: 54px; padding-top: 22px; border-top: 1px solid var(--border); color: var(--muted); font-size: .86rem; }
+    @media (max-width: 980px) {
+      .page { grid-template-columns: minmax(0, 1fr); }
+      .toc { position: static; max-height: none; order: -1; }
+    }
+    @media (max-width: 600px) {
+      .page { width: min(100% - 20px, 1180px); margin-top: 10px; }
+      article { border-radius: 14px; padding: 22px 18px; }
+      .article-body iframe { height: 620px !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <article>
+      <header>
+        <div class="eyebrow">vLLM Blog · 中文翻译</div>
+        <h1>发布 vLLM-GR：面向生成式推荐的高效推理</h1>
+        <p class="original-title">Announcing vLLM-GR: Efficient Inference for Generative Recommendation</p>
+        <div class="meta">
+          <span>作者：vLLM-GR Team</span>
+          <span>发布日期：2026-11-24</span>
+          <a href="https://vllm.ai/blog/2026-11-24-vllm-gr-announcement">查看英文原文</a>
+        </div>
+      </header>
+      <div class="article-body"><p><img src="assets/2026-11-24-vllm-gr-announcement/vLLM-GR.jpg" alt="vLLM-GR 标志"></p>
+<h2>关于 vLLM-GR</h2>
+<p>今天，我们正式发布 <a href="https://github.com/vllm-project/vllm-gr"><strong>vLLM-GR</strong></a>。这是一个构建于 vLLM 之上的开源推理与服务框架，面向生成式推荐模型。</p>
+<p>以视频信息流为例。给定观看者的历史记录，OneRec 等模型可以生成一个语义 ID（Semantic ID，SID），表示观看者接下来可能观看的视频。为了组成信息流，应用需要获得一组候选项。vLLM-GR 在 vLLM 的模型执行能力和分页键值（KV）缓存之上加入束搜索（beam search），从而在一次请求中探索多个候选 ID。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/framework-overview.png" alt="交互历史和任务特定输入依次流经输入表示、推荐模型与候选预测。示例模型包括 OneRec-1.7B、HSTU 和 OneTrans；输出包括候选 ID 和排序分数。"></p>
+<p>上图展示了推荐模型如何生成物品 ID，或为给定候选项打分。下方 OneRec-1.7B 示例沿着生成路径展开：从观看者历史记录出发，最终得到 128 个候选 SID。</p>
+<h2>为什么需要 vLLM-GR？</h2>
+<p>推荐服务必须在单次请求的延迟预算内，把一段很长的交互历史转化为一组候选项。生成每个物品 ID 可能只需几个 token，但引擎仍需探索许多路径，并返回应用实际能够提供的物品。</p>
+<ol>
+<li><strong>在 vLLM 技术栈上运行推荐模型。</strong> 团队将推荐模型从离线评估迁移到 NVIDIA GPU 和昇腾 NPU 上的在线服务时，可以复用 vLLM 的模型执行、调度和分页 KV 缓存。</li>
+<li><strong>降低宽候选搜索的成本。</strong> 不同候选路径共享已缓存的用户历史。引擎在一次请求中连续执行多步束搜索，并在加速器上选择候选项，从而减少重复计算以及每一步与主机之间的协调。</li>
+<li><strong>让推荐结果与物品目录保持一致。</strong> 目录约束会引导搜索生成能够映射到真实物品的 ID。模型和目录更新机制使团队能在模型与库存变化时及时刷新服务的推荐内容。</li>
+</ol>
+<h2>架构内部</h2>
+<p>vLLM-GR 把推荐搜索直接构建到 vLLM 引擎中。vLLM 提供调度器、模型执行和分页 KV 缓存；vLLM-GR 则加入覆盖整个搜索过程的束会话（beam session），并跟踪候选路径的分支方式。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/gr-inference-architecture.png" alt="蓝色表示复用的 vLLM 组件，例如 HTTP 入口和模型前向计算；黄色表示对 EngineCore 调度和工作进程执行的扩展；粉色表示 vLLM-GR 新增组件，包括离线与 gRPC 入口、束会话、BeamAttn、后缀 KV，以及目录约束和全词表两类束选择。"></p>
+<p>EngineCore 负责束会话从准入到完成的整个生命周期。调度器把预填充和解码阶段分派给工作进程。每个阶段中，模型运行器为下一个 token 打分，束选择则记录每条保留路径的分数和父路径。下一轮解码根据这些父索引读取正确的 KV 状态。</p>
+<h3>主要特性</h3>
+<ul>
+<li><strong>简单。</strong> 可以通过离线 Python 接口、兼容 OpenAI 的 HTTP 接口或 gRPC 提交一次完整束搜索。引擎自行执行解码循环，并在单个响应中返回候选序列与分数。</li>
+<li><strong>灵活。</strong> 可以搜索整个词表，也可以把生成范围限制为物品目录中的语义 ID。逐阶段的束宽和逐父路径的候选数限制，使服务能够探索比最终返回结果更多的部分 ID。</li>
+<li><strong>高性能。</strong> 多个束共享提示词 KV，无需为每个候选项复制观看者历史。加速器执行当前阶段时，主机同时准备下一阶段，从而缩短解码步骤之间的等待时间。</li>
+</ul>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/catalog-beam-search.png" alt="一次请求先探索 2 条、再探索 3 条、最后保留 2 条符合目录的路径。虚线分支表示被拒绝的前缀；响应包含两个完整 SID 及其示例分数。"></p>
+<p><em>一次请求使用 2 → 3 → 2 的束宽返回两个候选项。由于没有物品以 <code>A1 · B1</code> 为前缀，目录会过滤掉该路径。全词表搜索会跳过此过滤。图中的 SID 和分数仅作说明。</em></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/00-async-pipeline-time-aligned.png" alt="BeamSearch PDD 工作负载优化。调度器接收请求、准备提示词并将预填充派发给设备端 Beam Decoder；随后在设备执行前一阶段期间准备每轮解码。束选择先保留两个前缀，再保留三个，最终返回两个完整 SID。"></p>
+<p><em>在预填充—解码—解码（prefill–decode–decode，PDD）流水线中，调度器接收一个 <code>BeamSearch()</code> 请求，并把预填充阶段派发给工作进程。预填充为第一个 SID 组成部分打分，同时主机准备解码 1；执行解码 1 时，主机准备解码 2。第二轮解码继承已选父路径的后缀 KV，并完成两个 SID。绿色表示每个阶段选中的组成部分。</em></p>
+<h2>性能评估</h2>
+<p>基准测试采用 P99 延迟，展示束宽和批量大小如何影响生成式推荐的尾延迟。两张总览图将输入长度固定为 1,024 个 token，在 4 款 NVIDIA GPU 和 2 款昇腾 NPU 上，比较束宽 256 与 128、批量大小 1、4、8 的表现。这些图汇总了多组独立测试，各组采用不同的计时定义、样本数量和后端设置。</p>
+<p>在 RTX PRO 6000 上，vLLM-GR、SGLang Beam 和 NVIDIA SID-GR 均以 BF16 运行 OneRec-1.7B，使用相同的合成输入生成 3 个 token，并关闭目录约束。经过 3 次预热后，每个数据点统计 48 个计时批次的整批 P99。计时包含把候选 ID 和分数返回主机的时间，但不包含 HTTP。以 <em>W</em> 表示束宽、<em>K</em> 表示候选池大小时，vLLM-GR 和 NVIDIA SID-GR 均使用 <em>K = W</em>；SGLang Beam 使用其原生的 <em>2W</em> 候选池。</p>
+<p>在昇腾 A2 和 A5 上，vLLM-GR 与 xLLM 使用目录约束表。基准摘要没有记录 SGLang 的约束设置。L20 的记录样本数根据配置不同，在 100 到 1,000 个计时批次之间。现有摘要没有给出这些比较使用的确切后端版本，也没有给出 RTX PRO 6000 之外测试的预热次数。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/overview.svg" alt="束宽 256、输入长度 1,024 个 token 时，6 款加速器在批量大小 1、4、8 下的 P99 延迟。昇腾 NPU 平台 A2 和 A5 上，vLLM-GR 与 xLLM 使用目录约束表。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/overview-bw128.svg" alt="束宽 128、输入长度 1,024 个 token 时，6 款加速器在批量大小 1、4、8 下的 P99 延迟。昇腾 NPU 平台 A2 和 A5 上，vLLM-GR 与 xLLM 使用目录约束表。"></p>
+<p>束宽为 256 时，在所有 6 款加速器上，vLLM-GR 都在批量大小 4 和 8 时取得图中各后端最低的 P99。H20 上，当束宽为 256、批量大小为 8 时，vLLM-GR、SGLang 和 NVIDIA SID-GR 的 P99 分别为 369.4 毫秒、1,280.1 毫秒和 428.1 毫秒。</p>
+<p>在 RTX PRO 6000 上，束宽 256、批量大小 1 时，NVIDIA SID-GR 报告 28.25 毫秒，vLLM-GR 为 29.21 毫秒。A2 上，在相同束宽、批量大小 8 且两者均启用目录约束时，vLLM-GR 和 xLLM 分别为 312.69 毫秒和 324.60 毫秒。束宽为 128 时，最低延迟后端会随加速器和批量大小而变化。</p>
+<p>展开下面的硬件部分，可以查看更大束宽与输入长度范围内的延迟变化。各加速器和批量大小的测试范围并不完全相同。</p>
+<details>
+<summary>H20 · B=1、B=4 和 B=8</summary>
+
+<p>束宽为 256、批量大小为 4 时，vLLM-GR 和 NVIDIA SID-GR 的 P99 都约为 191 毫秒；批量大小为 8 时，两者分别为 369.4 毫秒和 428.1 毫秒。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/h20-b1.png" alt="H20 在批量大小 1 下，不同束宽和输入长度对应的 P99 延迟（毫秒）。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/h20.png" alt="H20 在批量大小 4（上）和 8（下）时的 P99 延迟。图中展示输入长度 1,024 和 8,192 下延迟随束宽的变化，以及束宽 64 和 1,024 下延迟随输入长度的变化。"></p>
+</details>
+
+<details>
+<summary>RTX PRO 6000 · B=1、B=4 和 B=8</summary>
+
+<p>在两种总览束宽下，NVIDIA SID-GR 在批量大小 1 时取得最低 P99；vLLM-GR 在批量大小 4 和 8 时取得最低 P99。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/rtx-pro-6000.png" alt="RTX PRO 6000 在批量大小 1、4、8（从上到下）时的 P99 延迟（毫秒）。每个面板比较 vLLM-GR、SGLang Beam 和 NVIDIA SID-GR 在不同束宽和输入长度下的表现。"></p>
+</details>
+
+<details>
+<summary>A100 · B=1、B=4 和 B=8</summary>
+
+<p>批量大小为 8、束宽为 128 时，NVIDIA SID-GR 为 199.0 毫秒，vLLM-GR 为 209.7 毫秒；束宽为 256 时，vLLM-GR 为 274.5 毫秒，NVIDIA SID-GR 为 451.5 毫秒。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a100-b1.png" alt="A100 在批量大小 1 下，不同束宽和输入长度对应的 P99 延迟（毫秒）。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a100.png" alt="A100 在批量大小 4（上）和 8（下）时的 P99 延迟。图中展示输入长度 1,024 和 8,192 下延迟随束宽的变化，以及束宽 64 和 1,024 下延迟随输入长度的变化。"></p>
+</details>
+
+<details>
+<summary>L20 · B=1、B=4 和 B=8</summary>
+
+<p>批量大小为 8、束宽为 256 时，vLLM-GR 的 P99 为 474.3 毫秒，其次是 NVIDIA SID-GR 的 790.7 毫秒。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/l20-b1.png" alt="L20 在批量大小 1 下，不同束宽和输入长度对应的 P99 延迟（毫秒）。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/l20.png" alt="L20 在批量大小 4（上）和 8（下）时的 P99 延迟。两种批量的束宽扫描都使用 1,024 个输入 token；批量 4 还测试 8,192，批量 8 还测试 4,096。批量 8 在束宽 64 和 1,024 下的输入长度扫描范围为 256 到 4,096 个 token。"></p>
+</details>
+
+<details>
+<summary>A2 · B=1、B=4 和 B=8</summary>
+
+<p>部分曲线没有延伸到最后一个配置，因为这些运行超出了设备显存。在输入长度 8,192、批量大小 8 时，vLLM-GR 完成了直到束宽 1,024 的扫描。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a2-b1.png" alt="A2 在批量大小 1 下，vLLM-GR、SGLang 和 xLLM 不同束宽与输入长度对应的 P99 延迟。vLLM-GR 和 xLLM 使用目录约束表。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a2.png" alt="A2 在批量大小 4（上）和 8（下）时，同一组束宽与输入长度扫描的 P99 延迟。vLLM-GR 和 xLLM 使用目录约束表。"></p>
+</details>
+
+<details>
+<summary>A5 · B=1、B=4 和 B=8</summary>
+
+<p>批量大小为 8 时，vLLM-GR 在束宽 128 和 256 下的 P99 分别为 128.2 毫秒和 151.7 毫秒。在两种总览束宽、全部三个批量大小下，它都取得图中各后端最低的 P99。</p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a5-b1.png" alt="A5 在批量大小 1 下，不同束宽和输入长度对应的 P99 延迟（毫秒）。vLLM-GR 和 xLLM 使用目录约束表。"></p>
+<p><img src="assets/2026-11-24-vllm-gr-announcement/p99/a5.png" alt="A5 在批量大小 4（上）和 8（下）时的 P99 延迟。图中展示输入长度 1,024 和 8,192 下延迟随束宽的变化，以及束宽 64 和 1,024 下延迟随输入长度的变化。vLLM-GR 和 xLLM 使用目录约束表。"></p>
+</details>
+
+<h2>未来路线图</h2>
+<p>我们的目标是构建一个既能服务候选生成、也能服务排序的框架，覆盖从超长用户历史到宽束搜索的完整流程。</p>
+<ul>
+<li><strong>支持更多模型。</strong> 把候选评分扩展到 HSTU、MTGR 和 RankMixer，为 OneTrans 增加原生服务支持，并探索对总参数规模更大的推荐模型（包括混合专家 MoE 模型）的服务优化。</li>
+<li><strong>更灵活的束搜索。</strong> 探索价值感知的候选选择和额外的语义 ID 输出头；在不同设备上支持更深的 SID 层级，以及可变长度生成，使单个束能够在 EOS 处停止、释放其槽位与 KV，并接收新请求。</li>
+<li><strong>在线批处理与调度。</strong> 探索一种在线调度器，由它决定何时组成批次以及纳入哪些排队请求。这样，不同用户历史长度的请求可以共同运行，同时在过载时限制队列长度。将形状相近的批次分组，可以复用同一张已捕获的计算图，以更少的填充进行重放。</li>
+<li><strong>长历史与 KV 复用。</strong> 优化 10,000 个 token 以上历史的预填充，并探索结合线性注意力或稀疏注意力的束搜索。随着用户历史增长，在请求之间复用未变化前缀的 KV 块，避免重复预填充这些 token。</li>
+<li><strong>分布式推理与 KV 缓存。</strong> 探索分布式 KV 缓存，使服务实例能够复用同一节点或其他节点上另一设备的 KV 块，并评估两种环境中的模型分片和 KV 传输成本。</li>
+<li><strong>与上游 vLLM 更紧密地集成。</strong> 基于 vLLM 的引擎和平台接口，把上游在调度与 KV 缓存管理方面的改进带到推荐工作负载中。定期将 vLLM-GR 更新到较新的稳定版 vLLM，并在支持的设备上验证引擎正确性、推荐质量和服务性能。</li>
+</ul>
+<h2>快速开始</h2>
+<p>vLLM-GR 0.30.0 基于 vLLM 0.30.0 构建，支持 NVIDIA GPU 和昇腾 NPU。</p>
+<h3>安装</h3>
+<p>请根据加速器查阅对应安装指南：<a href="https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/gpu.md">NVIDIA CUDA</a> 或<a href="https://github.com/vllm-project/vllm-gr/blob/main/docs/getting_started/installation/npu.md">昇腾 NPU</a>。</p>
+<h3>为生成式推荐模型提供服务</h3>
+<p>可以<a href="https://github.com/vllm-project/vllm-gr/blob/main/examples/offline_inference/beam_search/README.md">离线运行</a> OneRec-1.7B，也可以参考 <a href="https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/beam_search/README.md">HTTP 服务示例</a>或面向 CUDA 的 <a href="https://github.com/vllm-project/vllm-gr/blob/main/examples/online_serving/grpc/README.md">gRPC 服务示例</a>。</p>
+<h2>加入社区</h2>
+<p>如果你正在把其他推荐模型接入 vLLM-GR，请告诉我们该模型如何表示交互历史以及它预测什么。如果你要报告服务瓶颈，请提供模型、历史长度、束宽和硬件信息，以便其他人复现。<a href="https://github.com/vllm-project/vllm-gr">GitHub 仓库</a> · <a href="https://github.com/vllm-project/vllm-gr/issues">提交问题</a> · <a href="https://github.com/vllm-project/vllm-gr/blob/main/CONTRIBUTING.md">贡献指南</a></p>
+<h2>致谢</h2>
+<p>感谢 InferMatrix 团队的 Hongsheng Liu 和 Han Zhang 最先提出让 vLLM 支持生成式推荐高性能推理的设想。也感谢 Inferact 的 Roger Wang 和 Zhipeng Wang 进行深入讨论，帮助塑造 vLLM-GR 的路线图与架构。</p>
+<p>我们还要感谢以下团队和社区成员为 vLLM-GR 做出贡献，并分享大规模生产部署的经验与反馈：</p>
+<ul>
+<li><a href="https://inferact.ai/">Inferact</a>：<a href="https://github.com/princepride">Zhipeng Wang</a>、<a href="https://github.com/ywang96">Roger Wang</a></li>
+<li><a href="https://infermatrix.si/">InferMatrix Team</a>：<a href="https://github.com/zhanghanleo10">Han Zhang</a>、<a href="https://github.com/candanzg">Shucheng Zhang</a>、<a href="https://github.com/parallel-star8">Xiaodong Tian</a>、<a href="https://github.com/ZhiYunpenghuawei">Yunpeng Zhi</a>、<a href="https://github.com/DINGEde">Yi Ding</a>、<a href="https://github.com/JerryTcl">Jierui Yu</a>、<a href="https://github.com/hsliuustc0106">Hongsheng Liu</a></li>
+<li>openPangu：<a href="https://github.com/Lechmere-1">Xinming Han</a>、<a href="https://github.com/zhiweiyi11">Zhiwei Yi</a>、<a href="https://github.com/mengyuanuom">Mengyuan Ma</a>、<a href="https://github.com/fxy18">Yongxiang Feng</a></li>
+<li>TikTok-Global E-commerce：<a href="https://github.com/wangbin-cs">Bin Wang</a>、<a href="https://github.com/LJHG">Junye Long</a></li>
+<li>Data-Arch-China Commerce and Advertising-ML Infra：<a href="https://github.com/MaTwickenham">Haoran Ma</a>、<a href="https://github.com/SENGEL-code">Wenqiang Zhou</a>、<a href="https://github.com/CrazyKing5023">Junwen Guo</a></li>
+<li>LingQuAI：<a href="https://github.com/Trenx-J">Chunxu Jin</a>、<a href="https://github.com/wupingL">Wuping Liu</a></li>
+</ul>
+</div>
+      <p class="footer-note">本文由 Codex 根据 vLLM 官方英文原文翻译。交互图已本地化，可离线使用。</p>
+    </article>
+    <nav class="toc" aria-label="文章目录">
+      <strong>目录</strong>
+      <ol id="toc-list"></ol>
+    </nav>
+  </main>
+  <script>
+    (() => {
+      const headings = [...document.querySelectorAll('.article-body h2, .article-body h3')];
+      const used = new Map();
+      const slug = text => {
+        let base = text.trim().toLowerCase()
+          .replace(/[^\p{Letter}\p{Number}]+/gu, '-')
+          .replace(/^-+|-+$/g, '') || 'section';
+        const count = used.get(base) || 0;
+        used.set(base, count + 1);
+        return count ? base + '-' + (count + 1) : base;
+      };
+      const list = document.getElementById('toc-list');
+      headings.forEach(heading => {
+        heading.id = heading.id || slug(heading.textContent);
+        const item = document.createElement('li');
+        if (heading.tagName === 'H3') item.className = 'sub';
+        const link = document.createElement('a');
+        link.href = '#' + heading.id;
+        link.textContent = heading.textContent;
+        item.appendChild(link);
+        list.appendChild(item);
+      });
+    })();
+  </script>
+</body>
+</html>
